@@ -1,6 +1,14 @@
 import { getToken, logout } from "./auth";
 
-const BASE = "/api";
+const BASE = "https://sistema-projetos-backend.onrender.com/api";
+export const api = {
+  async listarProjetos() {
+    const res = await fetch(`${API_URL}/projetos`);
+    if (!res.ok) throw new Error("Erro ao buscar projetos");
+    return res.json();
+  },
+  // ... demais métodos da sua API
+};
 
 function authHeaders(extra = {}) {
   const token = getToken();
