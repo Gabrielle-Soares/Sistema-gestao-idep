@@ -266,8 +266,9 @@ textarea {
    ========================================================= */
 
 .conteudo {
+  width: 100%;
+  min-width: 0;
   padding: 36px 44px 80px;
-  max-width: 880px;
 }
 
 .conteudo-header {
