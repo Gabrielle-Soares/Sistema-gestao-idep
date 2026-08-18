@@ -17,15 +17,20 @@ async function handle(res) {
     window.location.reload();
     throw new Error("Sessão expirada. Faça login novamente.");
   }
+
+  // Tratamento para evitar o erro 'Unexpected token T' quando a API retorna HTML em vez de JSON
+  const contentType = res.headers.get("content-type");
+  const isJson = contentType && contentType.includes("application/json");
+  const data = isJson ? await res.json() : null;
+
   if (!res.ok) {
-    let msg = "Erro na requisição";
-    try {
-      const data = await res.json();
-      msg = data.erro || msg;
-    } catch (_) {}
+    const msg =
+      (data && data.erro) ||
+      `Erro ${res.status}: Servidor indisponível ou rota não encontrada.`;
     throw new Error(msg);
   }
-  return res.json();
+
+  return data;
 }
 
 export const api = {
