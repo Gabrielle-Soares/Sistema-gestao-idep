@@ -1,0 +1,672 @@
+/* =========================================================
+   Design tokens
+   ========================================================= */
+:root {
+  --ink: #101b33;
+  --ink-soft: #5b6478;
+  --paper: #f6f4ef;
+  --surface: #ffffff;
+  --sand: #ede7d8;
+  --line: #e2ddd0;
+  --signal: #e23744;
+  --signal-deep: #b8202c;
+  --trilha-verde: #2f7a5c;
+  --radius-sm: 6px;
+  --radius: 10px;
+  --shadow-card: 0 1px 2px rgba(16, 27, 51, 0.06), 0 1px 1px rgba(16, 27, 51, 0.04);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Inter", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: "Zilla Slab", Georgia, serif;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.mono {
+  font-family: "IBM Plex Mono", monospace;
+  letter-spacing: 0.01em;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.eyebrow {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--ink-soft);
+}
+
+/* =========================================================
+   App shell: sidebar + conteudo
+   ========================================================= */
+
+.app-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 268px 1fr;
+}
+
+.sidebar {
+  background: var(--ink);
+  color: #fff;
+  padding: 28px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-mark {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  background: var(--signal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Zilla Slab", serif;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+
+.sidebar .eyebrow {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.brand-title {
+  font-family: "Zilla Slab", serif;
+  font-weight: 700;
+  font-size: 18px;
+  color: #fff;
+}
+
+.projeto-ativo {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.projeto-ativo-nome {
+  font-family: "Zilla Slab", serif;
+  font-weight: 600;
+  font-size: 15px;
+  color: #fff;
+  line-height: 1.3;
+}
+
+/* ---------- Trilha: navegacao principal (elemento assinatura) ---------- */
+
+.trilha {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  flex: 1;
+}
+
+.trilha-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.55);
+  padding: 12px 4px;
+  text-align: left;
+  position: relative;
+  font-size: 14.5px;
+  font-weight: 500;
+}
+
+.trilha-item:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  left: 9px;
+  top: 32px;
+  width: 2px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.trilha-item.trilha-feita:not(:last-child)::before {
+  background: var(--trilha-verde);
+}
+
+.trilha-no {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  flex-shrink: 0;
+  position: relative;
+}
+
+.trilha-feita .trilha-no {
+  background: var(--trilha-verde);
+  border-color: var(--trilha-verde);
+}
+
+.trilha-feita .trilha-no::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 4px;
+  height: 9px;
+  border-right: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  transform: rotate(45deg);
+}
+
+.trilha-atual {
+  color: #fff;
+}
+
+.trilha-atual .trilha-no {
+  background: var(--signal);
+  border-color: var(--signal);
+  box-shadow: 0 0 0 4px rgba(226, 55, 68, 0.22);
+}
+
+.trilha-item:not(.trilha-bloqueada):hover {
+  color: #fff;
+}
+
+.trilha-bloqueada {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.sidebar-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  padding-top: 16px;
+}
+
+.usuario-nome {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  background: none;
+  border: none;
+  padding: 4px 0;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  cursor: pointer;
+}
+
+.usuario-nome:hover,
+.usuario-nome-ativo {
+  color: #fff;
+  text-decoration-color: rgba(255, 255, 255, 0.5);
+}
+
+.sidebar-footer .btn.secondary,
+.projeto-ativo .btn.secondary {
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #fff;
+}
+
+.sidebar-footer .btn.secondary:hover,
+.projeto-ativo .btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* =========================================================
+   Conteudo principal
+   ========================================================= */
+
+.conteudo {
+  padding: 36px 44px 80px;
+  max-width: 880px;
+}
+
+.conteudo-header {
+  margin-bottom: 26px;
+}
+
+.conteudo-header h1 {
+  font-size: 28px;
+}
+
+.painel {
+  display: flex;
+  flex-direction: column;
+}
+
+/* =========================================================
+   Cards / listas
+   ========================================================= */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  padding: 16px 18px;
+  margin-bottom: 12px;
+}
+
+.card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.card h3 {
+  font-size: 16.5px;
+}
+
+.card .meta {
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  margin-top: 4px;
+  line-height: 1.6;
+}
+
+.tag {
+  display: inline-block;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-weight: 500;
+}
+
+.tag.aluno {
+  background: #e5f1ec;
+  color: var(--trilha-verde);
+}
+
+.tag.ouvinte {
+  background: #fbeae2;
+  color: #b0552a;
+}
+
+.aluno-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.aluno-row:last-child {
+  border-bottom: none;
+}
+
+/* =========================================================
+   Formularios
+   ========================================================= */
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.form-grid.single {
+  grid-template-columns: 1fr;
+}
+
+.form-grid-full {
+  grid-column: 1 / -1;
+}
+
+.field textarea {
+  resize: vertical;
+  font-family: inherit;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.field label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+  font-family: "IBM Plex Mono", monospace;
+}
+
+.field input,
+.field select,
+.field textarea {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 10px 11px;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  outline: 2px solid var(--signal);
+  outline-offset: 1px;
+}
+
+/* =========================================================
+   Botoes
+   ========================================================= */
+
+.btn {
+  border: 1.5px solid var(--ink);
+  background: var(--ink);
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 13.5px;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.btn:hover {
+  background: #22314f;
+}
+
+.btn.amber {
+  background: var(--signal);
+  border-color: var(--signal-deep);
+  color: #fff;
+}
+
+.btn.amber:hover {
+  background: var(--signal-deep);
+}
+
+.btn.secondary {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+.btn.secondary:hover {
+  background: var(--sand);
+}
+
+.btn.danger {
+  background: transparent;
+  border-color: #dcb9b9;
+  color: var(--signal-deep);
+}
+
+.btn.danger:hover {
+  background: #fbeae2;
+}
+
+.btn.small {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.actions-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* =========================================================
+   Estados / mensagens
+   ========================================================= */
+
+.empty-state {
+  border: 1.5px dashed var(--line);
+  border-radius: var(--radius);
+  padding: 30px;
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: 14px;
+  background: var(--surface);
+}
+
+.section-title {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+  margin: 26px 0 12px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.section-title:first-child {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 0;
+}
+
+.banner {
+  border: 1px solid #e6b3b3;
+  background: #fbeae2;
+  color: var(--signal-deep);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13.5px;
+  margin-bottom: 14px;
+}
+
+.banner-ok {
+  border-color: #a8d5c0;
+  background: #e5f1ec;
+  color: var(--trilha-verde);
+}
+
+.signature-hint {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  color: var(--ink-soft);
+  border-left: 2px solid var(--signal);
+  padding-left: 8px;
+  margin-top: 6px;
+}
+
+.breadcrumb {
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin-bottom: 14px;
+}
+
+.breadcrumb strong {
+  color: var(--ink);
+}
+
+/* =========================================================
+   Login
+   ========================================================= */
+
+.login-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--ink);
+  background-image: radial-gradient(circle at 20% 20%, rgba(226, 55, 68, 0.12), transparent 40%),
+    radial-gradient(circle at 80% 85%, rgba(47, 122, 92, 0.14), transparent 45%);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 380px;
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 36px 32px 30px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+}
+
+.login-badge {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 18px;
+  border-radius: 10px;
+  background: var(--signal);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Zilla Slab", serif;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+/* =========================================================
+   Responsivo
+   ========================================================= */
+
+@media (max-width: 860px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: static;
+    height: auto;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 16px 18px;
+  }
+
+  .sidebar-brand {
+    flex: 1;
+  }
+
+  .projeto-ativo {
+    order: 3;
+    width: 100%;
+  }
+
+  .trilha {
+    flex-direction: row;
+    order: 2;
+    flex: none;
+    gap: 4px;
+  }
+
+  .trilha-item {
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    font-size: 11px;
+    text-align: center;
+  }
+
+  .trilha-item:not(:last-child)::before {
+    left: 32px;
+    top: 9px;
+    width: 24px;
+    height: 2px;
+  }
+
+  .sidebar-footer {
+    border-top: none;
+    padding-top: 0;
+    gap: 10px;
+  }
+
+  .usuario-nome {
+    display: none;
+  }
+
+  .conteudo {
+    padding: 24px 18px 60px;
+    max-width: 100%;
+  }
+
+  .conteudo-header h1 {
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 620px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .card-row {
+    flex-direction: column;
+  }
+
+  .actions-row {
+    width: 100%;
+  }
+
+  .actions-row .btn {
+    flex: 1;
+  }
+
+  .aluno-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .login-card {
+    padding: 28px 22px 24px;
+  }
+}

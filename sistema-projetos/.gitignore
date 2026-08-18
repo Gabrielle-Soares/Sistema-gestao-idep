@@ -1,0 +1,9 @@
+node_modules/
+dist/
+backend/sistema.db
+backend/sistema.db-journal
+backend/sistema.db-wal
+backend/sistema.db-shm
+backend/uploads/*
+!backend/uploads/.gitkeep
+.DS_Store

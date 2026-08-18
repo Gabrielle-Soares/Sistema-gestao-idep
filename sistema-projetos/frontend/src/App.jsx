@@ -1,0 +1,122 @@
+import { useState } from "react";
+import Login from "./components/Login.jsx";
+import AbaPrincipal from "./components/AbaPrincipal.jsx";
+import AbaPedagogico from "./components/AbaPedagogico.jsx";
+import AbaFinanceiro from "./components/AbaFinanceiro.jsx";
+import MinhaConta from "./components/MinhaConta.jsx";
+import { getUsuario, isAuthenticated, logout } from "./auth";
+
+const ETAPAS = [
+  { id: "principal", label: "Principal", precisaProjeto: false },
+  { id: "pedagogico", label: "Pedagogico", precisaProjeto: true },
+  { id: "financeiro", label: "Financeiro", precisaProjeto: true },
+];
+
+const TITULOS = {
+  principal: "Principal",
+  pedagogico: "Pedagogico",
+  financeiro: "Financeiro",
+  conta: "Minha Conta",
+};
+
+export default function App() {
+  const [usuarioLogado, setUsuarioLogado] = useState(() => (isAuthenticated() ? getUsuario() : null));
+  const [projetoAtivo, setProjetoAtivo] = useState(null);
+  const [aba, setAba] = useState("principal");
+
+  if (!usuarioLogado) {
+    return <Login onLogin={setUsuarioLogado} />;
+  }
+
+  const abrirProjeto = (projeto) => {
+    setProjetoAtivo(projeto);
+    setAba("pedagogico");
+  };
+
+  const voltarParaProjetos = () => {
+    setProjetoAtivo(null);
+    setAba("principal");
+  };
+
+  const sair = () => {
+    logout();
+    setUsuarioLogado(null);
+    setProjetoAtivo(null);
+    setAba("principal");
+  };
+
+  const indiceAtual = ETAPAS.findIndex((e) => e.id === aba);
+
+  return (
+    <div className="app-shell">
+      <aside className="sidebar">
+        <div className="sidebar-brand">
+          <div className="brand-mark">IDEP</div>
+          <div>
+            <div className="eyebrow">Sistema de Gestao</div>
+            <div className="brand-title">Projetos</div>
+          </div>
+        </div>
+
+        {projetoAtivo && (
+          <div className="projeto-ativo">
+            <div className="eyebrow">Projeto atual</div>
+            <div className="projeto-ativo-nome">{projetoAtivo.nome}</div>
+            <button className="btn secondary small" onClick={voltarParaProjetos}>
+              Trocar de projeto
+            </button>
+          </div>
+        )}
+
+        <nav className="trilha" aria-label="Etapas do projeto">
+          {ETAPAS.map((etapa, i) => {
+            const bloqueada = etapa.precisaProjeto && !projetoAtivo;
+            const estado =
+              aba !== "conta" && i < indiceAtual ? "feita" : aba === etapa.id ? "atual" : "proxima";
+            return (
+              <button
+                key={etapa.id}
+                className={`trilha-item trilha-${estado} ${bloqueada ? "trilha-bloqueada" : ""}`}
+                onClick={() => !bloqueada && setAba(etapa.id)}
+                disabled={bloqueada}
+                title={bloqueada ? "Abra um projeto primeiro" : ""}
+              >
+                <span className="trilha-no" aria-hidden="true" />
+                <span className="trilha-label">{etapa.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+
+        <div className="sidebar-footer">
+          <button
+            className={`usuario-nome mono ${aba === "conta" ? "usuario-nome-ativo" : ""}`}
+            onClick={() => setAba("conta")}
+            title="Minha conta"
+          >
+            {usuarioLogado.nome}
+          </button>
+          <button className="btn secondary small" onClick={sair}>
+            Sair
+          </button>
+        </div>
+      </aside>
+
+      <main className="conteudo">
+        <header className="conteudo-header">
+          <h1>{TITULOS[aba]}</h1>
+        </header>
+
+        <div className="painel">
+          {aba === "principal" && <AbaPrincipal onAbrirProjeto={abrirProjeto} />}
+          {aba === "pedagogico" && projetoAtivo && <AbaPedagogico projeto={projetoAtivo} />}
+          {aba === "financeiro" && projetoAtivo && <AbaFinanceiro projeto={projetoAtivo} />}
+          {aba === "conta" && <MinhaConta usuario={usuarioLogado} />}
+          {(aba === "pedagogico" || aba === "financeiro") && !projetoAtivo && (
+            <div className="empty-state">Abra um projeto na aba Principal para continuar.</div>
+          )}
+        </div>
+      </main>
+    </div>
+  );
+}
