@@ -9,17 +9,17 @@ const router = express.Router();
 router.post("/login", (req, res) => {
   const { usuario, senha } = req.body;
   if (!usuario || !senha) {
-    return res.status(400).json({ erro: "Informe usuario e senha" });
+    return res.status(400).json({ erro: "Informe usuário e senha" });
   }
 
   const registro = db.prepare("SELECT * FROM usuarios WHERE usuario = ?").get(usuario.trim());
   if (!registro) {
-    return res.status(401).json({ erro: "Usuario ou senha invalidos" });
+    return res.status(401).json({ erro: "Usuário ou senha inválidos" });
   }
 
   const senhaCorreta = bcrypt.compareSync(senha, registro.senha_hash);
   if (!senhaCorreta) {
-    return res.status(401).json({ erro: "Usuario ou senha invalidos" });
+    return res.status(401).json({ erro: "Usuário ou senha inválidos" });
   }
 
   const token = gerarToken(registro);
@@ -42,7 +42,7 @@ router.put("/senha", autenticacaoObrigatoria, (req, res) => {
   }
 
   const registro = db.prepare("SELECT * FROM usuarios WHERE id = ?").get(req.usuario.id);
-  if (!registro) return res.status(404).json({ erro: "Usuario nao encontrado" });
+  if (!registro) return res.status(404).json({ erro: "Usuário não encontrado" });
 
   const senhaCorreta = bcrypt.compareSync(senhaAtual, registro.senha_hash);
   if (!senhaCorreta) {

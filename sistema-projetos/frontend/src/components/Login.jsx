@@ -11,7 +11,7 @@ export default function Login({ onLogin }) {
     e.preventDefault();
     setErro("");
     if (!usuario.trim() || !senha) {
-      setErro("Informe usuario e senha.");
+      setErro("Informe usuário e senha.");
       return;
     }
     setEnviando(true);
@@ -30,12 +30,12 @@ export default function Login({ onLogin }) {
       <form className="login-card" onSubmit={entrar}>
         <div className="login-badge">IDEP</div>
         <div className="eyebrow" style={{ textAlign: "center", marginBottom: 4 }}>
-          Sistema de Gestao
+          Sistema de Gestão
         </div>
         <h1 style={{ textAlign: "center", marginBottom: 22 }}>Projetos &amp; Cursos</h1>
 
         <div className="field" style={{ marginBottom: 12 }}>
-          <label>Usuario</label>
+          <label>Usuário</label>
           <input
             autoFocus
             value={usuario}

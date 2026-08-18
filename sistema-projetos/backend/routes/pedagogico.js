@@ -33,7 +33,7 @@ router.post("/projetos/:projetoId/cursos", (req, res) => {
     return res.status(400).json({ erro: "Nome do curso e obrigatorio" });
   }
   const projeto = db.prepare("SELECT id FROM projetos WHERE id = ?").get(req.params.projetoId);
-  if (!projeto) return res.status(404).json({ erro: "Projeto nao encontrado" });
+  if (!projeto) return res.status(404).json({ erro: "Projeto não encontrado" });
 
   const stmt = db.prepare(`
     INSERT INTO cursos (projeto_id, nome, carga_horaria, instrutor_id, local, municipio, horario)
@@ -61,7 +61,7 @@ router.post("/projetos/:projetoId/cursos", (req, res) => {
 // Atualizar curso
 router.put("/cursos/:cursoId", (req, res) => {
   const existente = db.prepare("SELECT * FROM cursos WHERE id = ?").get(req.params.cursoId);
-  if (!existente) return res.status(404).json({ erro: "Curso nao encontrado" });
+  if (!existente) return res.status(404).json({ erro: "Curso não encontrado" });
   const { nome, carga_horaria, instrutor_id, local, municipio, horario } = req.body;
   db.prepare(`
     UPDATE cursos SET nome = ?, carga_horaria = ?, instrutor_id = ?, local = ?, municipio = ?, horario = ?
@@ -88,7 +88,7 @@ router.put("/cursos/:cursoId", (req, res) => {
 // Excluir curso
 router.delete("/cursos/:cursoId", (req, res) => {
   const existente = db.prepare("SELECT * FROM cursos WHERE id = ?").get(req.params.cursoId);
-  if (!existente) return res.status(404).json({ erro: "Curso nao encontrado" });
+  if (!existente) return res.status(404).json({ erro: "Curso não encontrado" });
   db.prepare("DELETE FROM cursos WHERE id = ?").run(req.params.cursoId);
   res.json({ ok: true });
 });
@@ -127,7 +127,7 @@ router.post("/cursos/:cursoId/alunos", (req, res) => {
     return res.status(400).json({ erro: "Nome e obrigatorio" });
   }
   const curso = db.prepare("SELECT id FROM cursos WHERE id = ?").get(req.params.cursoId);
-  if (!curso) return res.status(404).json({ erro: "Curso nao encontrado" });
+  if (!curso) return res.status(404).json({ erro: "Curso não encontrado" });
 
   const tipoFinal = tipo === "ouvinte" ? "ouvinte" : "aluno";
   const colunas = CAMPOS_ALUNO.join(", ");
@@ -145,7 +145,7 @@ router.post("/cursos/:cursoId/alunos", (req, res) => {
 // Atualizar aluno/ouvinte
 router.put("/alunos/:alunoId", (req, res) => {
   const existente = db.prepare("SELECT * FROM alunos WHERE id = ?").get(req.params.alunoId);
-  if (!existente) return res.status(404).json({ erro: "Registro nao encontrado" });
+  if (!existente) return res.status(404).json({ erro: "Registro não encontrado" });
 
   const tipoFinal = req.body.tipo === "ouvinte" ? "ouvinte" : req.body.tipo === "aluno" ? "aluno" : existente.tipo;
   const sets = CAMPOS_ALUNO.map((c) => `${c} = ?`).join(", ");
@@ -165,7 +165,7 @@ router.put("/alunos/:alunoId", (req, res) => {
 // Remover aluno/ouvinte
 router.delete("/alunos/:alunoId", (req, res) => {
   const existente = db.prepare("SELECT * FROM alunos WHERE id = ?").get(req.params.alunoId);
-  if (!existente) return res.status(404).json({ erro: "Registro nao encontrado" });
+  if (!existente) return res.status(404).json({ erro: "Registro não encontrado" });
   db.prepare("DELETE FROM alunos WHERE id = ?").run(req.params.alunoId);
   res.json({ ok: true });
 });
@@ -181,7 +181,7 @@ router.get("/cursos/:cursoId/lista/pdf", (req, res) => {
        WHERE c.id = ?`
     )
     .get(req.params.cursoId);
-  if (!curso) return res.status(404).json({ erro: "Curso nao encontrado" });
+  if (!curso) return res.status(404).json({ erro: "Curso não encontrado" });
 
   const titulo = req.query.titulo || `Lista - ${curso.nome}`;
   const data = req.query.data || new Date().toLocaleDateString("pt-BR");
@@ -241,13 +241,13 @@ router.get("/cursos/:cursoId/lista/pdf", (req, res) => {
 
   doc.fillColor("#000").fontSize(10);
   doc.text(
-    `Curso: ${curso.nome}   |   Instrutor: ${curso.instrutor_nome || "-"}   |   Carga horaria: ${
+    `Curso: ${curso.nome}   |   Instrutor: ${curso.instrutor_nome || "-"}   |   Carga horária: ${
       curso.carga_horaria || "-"
     }`,
     startX
   );
   doc.text(
-    `Local: ${curso.local || "-"}   |   Municipio: ${curso.municipio || "-"}   |   Horario: ${
+    `Local: ${curso.local || "-"}   |   Município: ${curso.municipio || "-"}   |   Horário: ${
       curso.horario || "-"
     }`,
     startX
@@ -316,7 +316,7 @@ router.get("/cursos/:cursoId/alunos/excel", async (req, res) => {
        WHERE c.id = ?`
     )
     .get(req.params.cursoId);
-  if (!curso) return res.status(404).json({ erro: "Curso nao encontrado" });
+  if (!curso) return res.status(404).json({ erro: "Curso não encontrado" });
 
   const alunos = db
     .prepare("SELECT * FROM alunos WHERE curso_id = ? ORDER BY tipo ASC, nome ASC")
@@ -333,7 +333,7 @@ router.get("/cursos/:cursoId/alunos/excel", async (req, res) => {
     { header: "CPF", key: "cpf", width: 16 },
     { header: "Data de nascimento", key: "data_nascimento", width: 16 },
     { header: "Telefone", key: "telefone", width: 16 },
-    { header: "Endereco", key: "endereco", width: 30 },
+    { header: "Endereço", key: "endereco", width: 30 },
     { header: "Escolaridade", key: "escolaridade", width: 22 },
     { header: "Renda familiar", key: "renda_familiar", width: 20 },
     { header: "Cor/Raca", key: "cor_raca", width: 16 },
@@ -341,7 +341,7 @@ router.get("/cursos/:cursoId/alunos/excel", async (req, res) => {
     { header: "Comunidade tradicional", key: "comunidade_tradicional", width: 20 },
     { header: "PCD", key: "pcd", width: 12 },
     { header: "LGBT", key: "lgbt", width: 12 },
-    { header: "Observacoes", key: "observacoes", width: 30 },
+    { header: "Observações", key: "observacoes", width: 30 },
   ];
   sheet.getRow(1).font = { bold: true };
   sheet.getRow(1).fill = {

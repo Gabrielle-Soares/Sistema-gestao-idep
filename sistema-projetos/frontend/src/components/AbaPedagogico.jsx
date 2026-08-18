@@ -22,28 +22,28 @@ const FORM_ALUNO_VAZIO = {
 const OPCOES_ESCOLARIDADE = [
   "Fundamental incompleto",
   "Fundamental completo",
-  "Medio incompleto",
-  "Medio completo",
+  "Médio incompleto",
+  "Médio completo",
   "Superior incompleto",
   "Superior completo",
-  "Pos-graduacao",
+  "Pós-graduação",
 ];
 
 const OPCOES_RENDA = [
-  "Ate 1 salario minimo",
-  "De 1 a 2 salarios minimos",
-  "De 2 a 3 salarios minimos",
-  "Acima de 3 salarios minimos",
-  "Nao informado",
+  "Até 1 salário mínimo",
+  "De 1 a 2 salários mínimos",
+  "De 2 a 3 salários mínimos",
+  "Acima de 3 salários mínimos",
+  "Não informado",
 ];
 
-const OPCOES_COR_RACA = ["Branca", "Preta", "Parda", "Amarela", "Indigena", "Nao declarado"];
+const OPCOES_COR_RACA = ["Branca", "Preta", "Parda", "Amarela", "Indígena", "Não declarado"];
 
-const OPCOES_GENERO = ["Feminino", "Masculino", "Nao-binario", "Prefere nao informar", "Outro"];
+const OPCOES_GENERO = ["Feminino", "Masculino", "Não binário", "Prefere não informar", "Outro"];
 
-const OPCOES_COMUNIDADE = ["Nao", "Quilombola", "Indigena", "Ribeirinha", "Outra"];
+const OPCOES_COMUNIDADE = ["Não", "Quilombola", "Indígena", "Ribeirinha", "Outra"];
 
-const OPCOES_SIM_NAO = ["Nao informado", "Sim", "Nao"];
+const OPCOES_SIM_NAO = ["Não informado", "Sim", "Não"];
 
 function CursoCard({ curso, onExcluirCurso }) {
   const [aberto, setAberto] = useState(false);
@@ -103,10 +103,10 @@ function CursoCard({ curso, onExcluirCurso }) {
         <div>
           <h3>{curso.nome}</h3>
           <div className="meta">
-            Instrutor: {curso.instrutor_nome || "-"} &nbsp;|&nbsp; Carga horaria: {curso.carga_horaria || "-"}
+            Instrutor: {curso.instrutor_nome || "-"} &nbsp;|&nbsp; Carga horária: {curso.carga_horaria || "-"}
           </div>
           <div className="meta">
-            Local: {curso.local || "-"} &nbsp;|&nbsp; Municipio: {curso.municipio || "-"} &nbsp;|&nbsp; Horario:{" "}
+            Local: {curso.local || "-"} &nbsp;|&nbsp; Município: {curso.municipio || "-"} &nbsp;|&nbsp; Horário:{" "}
             {curso.horario || "-"}
           </div>
         </div>
@@ -136,7 +136,7 @@ function CursoCard({ curso, onExcluirCurso }) {
               <input
                 value={formAluno.nis}
                 onChange={atualizarCampoAluno("nis")}
-                placeholder="Numero de Identificacao Social"
+                placeholder="Número de Identificação Social"
                 inputMode="numeric"
               />
             </div>
@@ -183,13 +183,13 @@ function CursoCard({ curso, onExcluirCurso }) {
           {mostrarComplementares && (
             <div className="form-grid" style={{ marginBottom: 10 }}>
               <div className="field">
-                <label>Endereco</label>
-                <input value={formAluno.endereco} onChange={atualizarCampoAluno("endereco")} placeholder="Rua, numero, bairro" />
+                <label>Endereço</label>
+                <input value={formAluno.endereco} onChange={atualizarCampoAluno("endereco")} placeholder="Rua, número, bairro" />
               </div>
               <div className="field">
                 <label>Escolaridade</label>
                 <select value={formAluno.escolaridade} onChange={atualizarCampoAluno("escolaridade")}>
-                  <option value="">Nao informado</option>
+                  <option value="">Não informado</option>
                   {OPCOES_ESCOLARIDADE.map((op) => (
                     <option key={op} value={op}>{op}</option>
                   ))}
@@ -198,25 +198,25 @@ function CursoCard({ curso, onExcluirCurso }) {
               <div className="field">
                 <label>Renda familiar</label>
                 <select value={formAluno.renda_familiar} onChange={atualizarCampoAluno("renda_familiar")}>
-                  <option value="">Nao informado</option>
+                  <option value="">Não informado</option>
                   {OPCOES_RENDA.map((op) => (
                     <option key={op} value={op}>{op}</option>
                   ))}
                 </select>
               </div>
               <div className="field">
-                <label>Cor / Raca</label>
+                <label>Cor / Raça</label>
                 <select value={formAluno.cor_raca} onChange={atualizarCampoAluno("cor_raca")}>
-                  <option value="">Nao informado</option>
+                  <option value="">Não informado</option>
                   {OPCOES_COR_RACA.map((op) => (
                     <option key={op} value={op}>{op}</option>
                   ))}
                 </select>
               </div>
               <div className="field">
-                <label>Genero</label>
+                <label>Gênero</label>
                 <select value={formAluno.genero} onChange={atualizarCampoAluno("genero")}>
-                  <option value="">Nao informado</option>
+                  <option value="">Não informado</option>
                   {OPCOES_GENERO.map((op) => (
                     <option key={op} value={op}>{op}</option>
                   ))}
@@ -225,7 +225,7 @@ function CursoCard({ curso, onExcluirCurso }) {
               <div className="field">
                 <label>Comunidade tradicional</label>
                 <select value={formAluno.comunidade_tradicional} onChange={atualizarCampoAluno("comunidade_tradicional")}>
-                  <option value="">Nao informado</option>
+                  <option value="">Não informado</option>
                   {OPCOES_COMUNIDADE.map((op) => (
                     <option key={op} value={op}>{op}</option>
                   ))}
@@ -248,12 +248,12 @@ function CursoCard({ curso, onExcluirCurso }) {
                 </select>
               </div>
               <div className="field form-grid-full">
-                <label>Observacoes</label>
+                <label>Observações</label>
                 <textarea
                   rows={3}
                   value={formAluno.observacoes}
                   onChange={atualizarCampoAluno("observacoes")}
-                  placeholder="Observacoes gerais sobre o aluno"
+                  placeholder="Observações gerais sobre o aluno"
                 />
               </div>
             </div>
@@ -282,7 +282,7 @@ function CursoCard({ curso, onExcluirCurso }) {
                     </div>
                   </div>
                   <button className="btn small danger" onClick={() => removerAluno(a.id)}>
-                    remover
+              Remover
                   </button>
                 </div>
               ))}
@@ -299,7 +299,7 @@ function CursoCard({ curso, onExcluirCurso }) {
           <div className="section-title">Gerar lista para assinatura (PDF)</div>
           <div className="form-grid">
             <div className="field">
-              <label>Titulo da lista</label>
+            <label>Título da lista</label>
               <input value={tituloLista} onChange={(e) => setTituloLista(e.target.value)} />
             </div>
             <div className="field">
@@ -308,7 +308,7 @@ function CursoCard({ curso, onExcluirCurso }) {
             </div>
           </div>
           <div className="signature-hint">
-            O PDF gerado inclui nome, NIS, tipo (aluno/ouvinte) e espaco para assinatura de cada participante.
+            O PDF gerado inclui nome, NIS, tipo (aluno/ouvinte) e espaço para assinatura de cada participante.
           </div>
           <button className="btn amber" style={{ marginTop: 10 }} onClick={gerarPdf}>
             Gerar lista em PDF
@@ -383,7 +383,7 @@ function Instrutores({ instrutores, onMudou }) {
               <div key={i.id} className="aluno-row">
                 <span>{i.nome}</span>
                 <button className="btn small danger" onClick={() => remover(i.id)}>
-                  remover
+                  Remover
                 </button>
               </div>
             ))
@@ -462,7 +462,7 @@ export default function AbaPedagogico({ projeto }) {
             <input value={form.nome} onChange={atualizarCampo("nome")} placeholder="Nome do curso" />
           </div>
           <div className="field">
-            <label>Carga horaria</label>
+            <label>Carga horária</label>
             <input value={form.carga_horaria} onChange={atualizarCampo("carga_horaria")} placeholder="Ex: 40h" />
           </div>
           <div className="field">
@@ -481,11 +481,11 @@ export default function AbaPedagogico({ projeto }) {
             <input value={form.local} onChange={atualizarCampo("local")} placeholder="Local do curso" />
           </div>
           <div className="field">
-            <label>Municipio</label>
-            <input value={form.municipio} onChange={atualizarCampo("municipio")} placeholder="Municipio" />
+            <label>Município</label>
+            <input value={form.municipio} onChange={atualizarCampo("municipio")} placeholder="Município" />
           </div>
           <div className="field">
-            <label>Horario</label>
+            <label>Horário</label>
             <input value={form.horario} onChange={atualizarCampo("horario")} placeholder="Ex: 19h-22h" />
           </div>
         </div>

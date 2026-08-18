@@ -12,7 +12,7 @@ router.get("/", (req, res) => {
 // Buscar um projeto por id
 router.get("/:id", (req, res) => {
   const projeto = db.prepare("SELECT * FROM projetos WHERE id = ?").get(req.params.id);
-  if (!projeto) return res.status(404).json({ erro: "Projeto nao encontrado" });
+  if (!projeto) return res.status(404).json({ erro: "Projeto não encontrado" });
   res.json(projeto);
 });
 
@@ -32,7 +32,7 @@ router.post("/", (req, res) => {
 router.put("/:id", (req, res) => {
   const { nome, descricao } = req.body;
   const existente = db.prepare("SELECT * FROM projetos WHERE id = ?").get(req.params.id);
-  if (!existente) return res.status(404).json({ erro: "Projeto nao encontrado" });
+  if (!existente) return res.status(404).json({ erro: "Projeto não encontrado" });
 
   db.prepare("UPDATE projetos SET nome = ?, descricao = ? WHERE id = ?").run(
     nome ?? existente.nome,
@@ -46,7 +46,7 @@ router.put("/:id", (req, res) => {
 // Excluir projeto (e tudo que estiver vinculado, via ON DELETE CASCADE)
 router.delete("/:id", (req, res) => {
   const existente = db.prepare("SELECT * FROM projetos WHERE id = ?").get(req.params.id);
-  if (!existente) return res.status(404).json({ erro: "Projeto nao encontrado" });
+  if (!existente) return res.status(404).json({ erro: "Projeto não encontrado" });
   db.prepare("DELETE FROM projetos WHERE id = ?").run(req.params.id);
   res.json({ ok: true });
 });

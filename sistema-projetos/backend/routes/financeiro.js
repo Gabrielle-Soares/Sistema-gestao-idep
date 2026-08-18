@@ -35,7 +35,7 @@ router.get("/projetos/:projetoId/financeiro", (req, res) => {
 // Criar lancamento financeiro (com upload opcional de NF)
 router.post("/projetos/:projetoId/financeiro", upload.single("nf"), (req, res) => {
   const projeto = db.prepare("SELECT id FROM projetos WHERE id = ?").get(req.params.projetoId);
-  if (!projeto) return res.status(404).json({ erro: "Projeto nao encontrado" });
+  if (!projeto) return res.status(404).json({ erro: "Projeto não encontrado" });
 
   const { origem_projeto_id } = req.body;
   const arquivo = req.file ? req.file.filename : null;
@@ -70,7 +70,7 @@ router.get("/financeiro/:id/nf", (req, res) => {
   }
   const filePath = path.join(uploadsDir, registro.nf_arquivo);
   if (!fs.existsSync(filePath)) {
-    return res.status(404).json({ erro: "Arquivo nao encontrado no servidor" });
+    return res.status(404).json({ erro: "Arquivo não encontrado no servidor" });
   }
   res.download(filePath, registro.nf_nome_original || registro.nf_arquivo);
 });
@@ -78,7 +78,7 @@ router.get("/financeiro/:id/nf", (req, res) => {
 // Excluir lancamento financeiro
 router.delete("/financeiro/:id", (req, res) => {
   const registro = db.prepare("SELECT * FROM financeiro WHERE id = ?").get(req.params.id);
-  if (!registro) return res.status(404).json({ erro: "Registro nao encontrado" });
+  if (!registro) return res.status(404).json({ erro: "Registro não encontrado" });
   if (registro.nf_arquivo) {
     const filePath = path.join(uploadsDir, registro.nf_arquivo);
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);

@@ -8,13 +8,13 @@ import { getUsuario, isAuthenticated, logout } from "./auth";
 
 const ETAPAS = [
   { id: "principal", label: "Principal", precisaProjeto: false },
-  { id: "pedagogico", label: "Pedagogico", precisaProjeto: true },
+  { id: "pedagogico", label: "Pedagógico", precisaProjeto: true },
   { id: "financeiro", label: "Financeiro", precisaProjeto: true },
 ];
 
 const TITULOS = {
   principal: "Principal",
-  pedagogico: "Pedagogico",
+  pedagogico: "Pedagógico",
   financeiro: "Financeiro",
   conta: "Minha Conta",
 };
@@ -53,7 +53,7 @@ export default function App() {
         <div className="sidebar-brand">
           <div className="brand-mark">IDEP</div>
           <div>
-            <div className="eyebrow">Sistema de Gestao</div>
+            <div className="eyebrow">Sistema de Gestão</div>
             <div className="brand-title">Projetos</div>
           </div>
         </div>

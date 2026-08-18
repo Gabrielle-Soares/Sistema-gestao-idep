@@ -19,7 +19,7 @@ export default function MinhaConta({ usuario }) {
       return;
     }
     if (novaSenha !== confirmarSenha) {
-      setErro("A confirmacao nao bate com a nova senha.");
+      setErro("A confirmação não confere com a nova senha.");
       return;
     }
     if (novaSenha.length < 6) {
@@ -45,7 +45,7 @@ export default function MinhaConta({ usuario }) {
     <div>
       <div className="section-title">Dados da conta</div>
       <div className="card">
-        <div className="meta">Usuario</div>
+        <div className="meta">Usuário</div>
         <h3>{usuario?.nome}</h3>
         <div className="meta mono">login: {usuario?.usuario}</div>
       </div>

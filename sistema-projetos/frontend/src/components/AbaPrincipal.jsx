@@ -50,7 +50,7 @@ function ProjetoCard({ projeto, onAbrirProjeto, onMudou }) {
               <input value={nome} onChange={(e) => setNome(e.target.value)} />
             </div>
             <div className="field">
-              <label>Descricao (opcional)</label>
+              <label>Descrição (opcional)</label>
               <input value={descricao} onChange={(e) => setDescricao(e.target.value)} />
             </div>
           </div>
@@ -133,11 +133,11 @@ export default function AbaPrincipal({ onAbrirProjeto }) {
         <div className="form-grid">
           <div className="field">
             <label>Nome do projeto</label>
-            <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex: Formacao Digital 2026" />
+            <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex.: Formação Digital 2026" />
           </div>
           <div className="field">
-            <label>Descricao (opcional)</label>
-            <input value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Breve descricao" />
+            <label>Descrição (opcional)</label>
+            <input value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Breve descrição" />
           </div>
         </div>
         {erro && <div className="banner">{erro}</div>}

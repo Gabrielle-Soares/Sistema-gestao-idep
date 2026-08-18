@@ -44,14 +44,14 @@ export default function AbaFinanceiro({ projeto }) {
   };
 
   const excluir = async (id) => {
-    if (!confirm("Excluir este lancamento financeiro?")) return;
+    if (!confirm("Excluir este lançamento financeiro?")) return;
     await api.excluirFinanceiro(id);
     carregar();
   };
 
   return (
     <div>
-      <div className="section-title">Novo lancamento ({projeto.nome})</div>
+      <div className="section-title">Novo lançamento ({projeto.nome})</div>
       <form onSubmit={enviar}>
         <div className="form-grid">
           <div className="field">
@@ -74,14 +74,14 @@ export default function AbaFinanceiro({ projeto }) {
         </div>
         {erro && <div className="banner">{erro}</div>}
         <button className="btn amber" type="submit" disabled={enviando}>
-          {enviando ? "Enviando..." : "+ Registrar lancamento"}
+          {enviando ? "Enviando..." : "+ Registrar lançamento"}
         </button>
       </form>
 
-      <div className="section-title">Lancamentos registrados</div>
+      <div className="section-title">Lançamentos registrados</div>
       {carregando && <p className="mono">carregando...</p>}
       {!carregando && registros.length === 0 && (
-        <div className="empty-state">Nenhum lancamento financeiro registrado ainda.</div>
+        <div className="empty-state">Nenhum lançamento financeiro registrado ainda.</div>
       )}
       {registros.map((r) => (
         <div className="card" key={r.id}>
