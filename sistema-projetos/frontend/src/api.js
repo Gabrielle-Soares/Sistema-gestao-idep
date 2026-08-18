@@ -1,6 +1,7 @@
 import { getToken, logout } from "./auth";
+import { API_URL } from "./config";
 
-const BASE = "https://sistema-projetos-backend.onrender.com/api";
+const BASE = API_URL;
 
 function authHeaders(extra = {}) {
   const token = getToken();
@@ -18,16 +19,27 @@ async function handle(res) {
     throw new Error("Sessão expirada. Faça login novamente.");
   }
 
-  // Tratamento para evitar o erro 'Unexpected token T' quando a API retorna HTML em vez de JSON
-  const contentType = res.headers.get("content-type");
-  const isJson = contentType && contentType.includes("application/json");
-  const data = isJson ? await res.json() : null;
+  // Evita erro de parse quando proxy/deploy devolve HTML ou texto no lugar de JSON.
+  const contentType = res.headers.get("content-type") || "";
+  const body = await res.text();
+  let data = null;
+  if (contentType.includes("application/json") && body) {
+    try {
+      data = JSON.parse(body);
+    } catch {
+      // A resposta será tratada abaixo como inválida.
+    }
+  }
 
   if (!res.ok) {
     const msg =
       (data && data.erro) ||
       `Erro ${res.status}: Servidor indisponível ou rota não encontrada.`;
     throw new Error(msg);
+  }
+
+  if (!data) {
+    throw new Error("A API retornou uma resposta inválida. Verifique a URL configurada para a API.");
   }
 
   return data;
