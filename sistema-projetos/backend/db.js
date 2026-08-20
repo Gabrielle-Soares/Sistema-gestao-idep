@@ -81,6 +81,8 @@ CREATE TABLE IF NOT EXISTS financeiro (
   origem_projeto_id INTEGER REFERENCES projetos(id) ON DELETE SET NULL,
   nf_arquivo TEXT,
   nf_nome_original TEXT,
+  categoria TEXT NOT NULL DEFAULT 'Outros',
+  numero_nf TEXT,
   criado_em TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -164,6 +166,12 @@ if (!colunaExiste("projetos", "programa_social")) {
 }
 if (!colunaExiste("cursos", "programa_social")) {
   db.exec("ALTER TABLE cursos ADD COLUMN programa_social TEXT");
+}
+if (!colunaExiste("financeiro", "categoria")) {
+  db.exec("ALTER TABLE financeiro ADD COLUMN categoria TEXT NOT NULL DEFAULT 'Outros'");
+}
+if (!colunaExiste("financeiro", "numero_nf")) {
+  db.exec("ALTER TABLE financeiro ADD COLUMN numero_nf TEXT");
 }
 
 // ---------- Usuario padrao ----------

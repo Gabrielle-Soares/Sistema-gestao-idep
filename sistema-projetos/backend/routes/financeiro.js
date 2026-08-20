@@ -72,19 +72,26 @@ router.post("/projetos/:projetoId/financeiro", upload.single("nf"), (req, res) =
   const projeto = db.prepare("SELECT id FROM projetos WHERE id = ?").get(req.params.projetoId);
   if (!projeto) return res.status(404).json({ erro: "Projeto não encontrado" });
 
-  const { origem_projeto_id } = req.body;
+  const { origem_projeto_id, categoria, numero_nf } = req.body;
+  const categoriaFinal = categoria === "Instrutoria" ? "Instrutoria" : "Outros";
+  const numeroNfFinal = String(numero_nf || "").trim();
+  if (categoriaFinal === "Instrutoria" && !numeroNfFinal) {
+    return res.status(400).json({ erro: "O número da Nota Fiscal é obrigatório para Instrutoria" });
+  }
   const arquivo = req.file ? req.file.filename : null;
   const nomeOriginal = req.file ? req.file.originalname : null;
 
   const stmt = db.prepare(`
-    INSERT INTO financeiro (projeto_id, origem_projeto_id, nf_arquivo, nf_nome_original)
-    VALUES (?, ?, ?, ?)
+    INSERT INTO financeiro (projeto_id, origem_projeto_id, nf_arquivo, nf_nome_original, categoria, numero_nf)
+    VALUES (?, ?, ?, ?, ?, ?)
   `);
   const info = stmt.run(
     req.params.projetoId,
     origem_projeto_id || null,
     arquivo,
-    nomeOriginal
+    nomeOriginal,
+    categoriaFinal,
+    numeroNfFinal || null
   );
   const registro = db
     .prepare(
