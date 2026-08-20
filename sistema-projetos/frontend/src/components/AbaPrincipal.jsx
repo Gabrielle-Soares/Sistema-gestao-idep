@@ -5,6 +5,7 @@ function ProjetoCard({ projeto, onAbrirProjeto, onMudou }) {
   const [editando, setEditando] = useState(false);
   const [nome, setNome] = useState(projeto.nome);
   const [descricao, setDescricao] = useState(projeto.descricao || "");
+  const [programaSocial, setProgramaSocial] = useState(projeto.programa_social || "");
   const [erro, setErro] = useState("");
   const [salvando, setSalvando] = useState(false);
 
@@ -17,7 +18,7 @@ function ProjetoCard({ projeto, onAbrirProjeto, onMudou }) {
     }
     setSalvando(true);
     try {
-      await api.editarProjeto(projeto.id, { nome, descricao });
+      await api.editarProjeto(projeto.id, { nome, descricao, programa_social: programaSocial });
       setEditando(false);
       onMudou();
     } catch (e2) {
@@ -30,6 +31,7 @@ function ProjetoCard({ projeto, onAbrirProjeto, onMudou }) {
   const cancelar = () => {
     setNome(projeto.nome);
     setDescricao(projeto.descricao || "");
+    setProgramaSocial(projeto.programa_social || "");
     setErro("");
     setEditando(false);
   };
@@ -49,6 +51,7 @@ function ProjetoCard({ projeto, onAbrirProjeto, onMudou }) {
               <label>Nome do projeto</label>
               <input value={nome} onChange={(e) => setNome(e.target.value)} />
             </div>
+            <div className="field"><label>Programa social</label><input list="programas-sociais" value={programaSocial} onChange={(e) => setProgramaSocial(e.target.value)} placeholder="Selecione ou digite" /></div>
             <div className="field">
               <label>Descrição (opcional)</label>
               <input value={descricao} onChange={(e) => setDescricao(e.target.value)} />
@@ -74,6 +77,7 @@ function ProjetoCard({ projeto, onAbrirProjeto, onMudou }) {
         <div>
           <h3>{projeto.nome}</h3>
           {projeto.descricao && <div className="meta">{projeto.descricao}</div>}
+          {projeto.programa_social && <div className="meta">Programa social: {projeto.programa_social}</div>}
           <div className="meta mono">criado em {projeto.criado_em}</div>
         </div>
         <div className="actions-row">
@@ -96,6 +100,7 @@ export default function AbaPrincipal({ onAbrirProjeto }) {
   const [projetos, setProjetos] = useState([]);
   const [nome, setNome] = useState("");
   const [descricao, setDescricao] = useState("");
+  const [programaSocial, setProgramaSocial] = useState("");
   const [erro, setErro] = useState("");
   const [carregando, setCarregando] = useState(true);
 
@@ -117,9 +122,10 @@ export default function AbaPrincipal({ onAbrirProjeto }) {
       return;
     }
     try {
-      await api.criarProjeto({ nome, descricao });
+      await api.criarProjeto({ nome, descricao, programa_social: programaSocial });
       setNome("");
       setDescricao("");
+      setProgramaSocial("");
       carregar();
     } catch (e2) {
       setErro(e2.message);
@@ -135,6 +141,7 @@ export default function AbaPrincipal({ onAbrirProjeto }) {
             <label>Nome do projeto</label>
             <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex.: Formação Digital 2026" />
           </div>
+          <div className="field"><label>Programa social</label><input list="programas-sociais" value={programaSocial} onChange={(e) => setProgramaSocial(e.target.value)} placeholder="Selecione ou digite" /></div>
           <div className="field">
             <label>Descrição (opcional)</label>
             <input value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Breve descrição" />
@@ -145,6 +152,7 @@ export default function AbaPrincipal({ onAbrirProjeto }) {
           + Criar projeto
         </button>
       </form>
+      <datalist id="programas-sociais"><option value="Bolsa Família" /><option value="Cadastro Único" /><option value="PRONATEC" /><option value="Programa Nacional de Inclusão de Jovens" /><option value="Outro" /></datalist>
 
       <div className="section-title">Projetos cadastrados</div>
       {carregando && <p className="mono">carregando...</p>}

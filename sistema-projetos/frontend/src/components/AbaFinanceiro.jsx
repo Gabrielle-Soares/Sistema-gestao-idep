@@ -1,111 +1,41 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../api";
 
+const tipos = ["Lanche", "Pagamento de instrutor", "Hospedagem", "Diária", "Material específico", "Passagem", "Outro"];
+const hoje = () => new Date().toISOString().slice(0, 10);
+const novoItem = () => ({ tipo: "Lanche", descricao_outro: "", valor_unitario: "", dias: "1", numero_alunos: "" });
+const dinheiro = (v) => Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+const totalItem = (i) => Number(i.valor_unitario || 0) * Number(i.dias || 0) * (i.numero_alunos === "" ? 1 : Number(i.numero_alunos || 0));
+
 export default function AbaFinanceiro({ projeto }) {
-  const [registros, setRegistros] = useState([]);
-  const [projetos, setProjetos] = useState([]);
-  const [origemId, setOrigemId] = useState("");
-  const [arquivo, setArquivo] = useState(null);
-  const [erro, setErro] = useState("");
-  const [carregando, setCarregando] = useState(true);
-  const [enviando, setEnviando] = useState(false);
-
-  const carregar = () => {
-    setCarregando(true);
-    Promise.all([api.listarFinanceiro(projeto.id), api.listarProjetos()])
-      .then(([fin, todosProjetos]) => {
-        setRegistros(fin);
-        setProjetos(todosProjetos);
-      })
-      .catch((e) => setErro(e.message))
-      .finally(() => setCarregando(false));
-  };
-
-  useEffect(carregar, [projeto.id]);
-
-  const enviar = async (e) => {
-    e.preventDefault();
-    setErro("");
-    setEnviando(true);
-    try {
-      const formData = new FormData();
-      if (origemId) formData.append("origem_projeto_id", origemId);
-      if (arquivo) formData.append("nf", arquivo);
-      await api.criarFinanceiro(projeto.id, formData);
-      setOrigemId("");
-      setArquivo(null);
-      document.getElementById("nf-input").value = "";
-      carregar();
-    } catch (e2) {
-      setErro(e2.message);
-    } finally {
-      setEnviando(false);
-    }
-  };
-
-  const excluir = async (id) => {
-    if (!confirm("Excluir este lançamento financeiro?")) return;
-    await api.excluirFinanceiro(id);
-    carregar();
-  };
-
-  return (
-    <div>
-      <div className="section-title">Novo lançamento ({projeto.nome})</div>
-      <form onSubmit={enviar}>
-        <div className="form-grid">
-          <div className="field">
-            <label>Origem (projeto vinculado)</label>
-            <select value={origemId} onChange={(e) => setOrigemId(e.target.value)}>
-              <option value="">Selecione um projeto de origem</option>
-              {projetos
-                .filter((p) => p.id !== projeto.id)
-                .map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.nome}
-                  </option>
-                ))}
-            </select>
-          </div>
-          <div className="field">
-            <label>Nota fiscal (anexo)</label>
-            <input id="nf-input" type="file" onChange={(e) => setArquivo(e.target.files[0])} />
-          </div>
-        </div>
-        {erro && <div className="banner">{erro}</div>}
-        <button className="btn amber" type="submit" disabled={enviando}>
-          {enviando ? "Enviando..." : "+ Registrar lançamento"}
-        </button>
-      </form>
-
-      <div className="section-title">Lançamentos registrados</div>
-      {carregando && <p className="mono">carregando...</p>}
-      {!carregando && registros.length === 0 && (
-        <div className="empty-state">Nenhum lançamento financeiro registrado ainda.</div>
-      )}
-      {registros.map((r) => (
-        <div className="card" key={r.id}>
-          <div className="card-row">
-            <div>
-              <h3>{r.origem_nome ? `Origem: ${r.origem_nome}` : "Sem origem vinculada"}</h3>
-              <div className="meta">
-                {r.nf_nome_original ? `NF anexada: ${r.nf_nome_original}` : "Nenhuma NF anexada"}
-              </div>
-              <div className="meta mono">registrado em {r.criado_em}</div>
-            </div>
-            <div className="actions-row">
-              {r.nf_arquivo && (
-                <a className="btn small secondary" href={api.urlNf(r.id)} target="_blank" rel="noreferrer">
-                  Baixar NF
-                </a>
-              )}
-              <button className="btn small danger" onClick={() => excluir(r.id)}>
-                Excluir
-              </button>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
+  const [cursos, setCursos] = useState([]), [solicitacoes, setSolicitacoes] = useState([]), [registros, setRegistros] = useState([]), [projetos, setProjetos] = useState([]);
+  const [config, setConfig] = useState({ nome_instituto: "", cnpj: "" }), [filtro, setFiltro] = useState(""), [erro, setErro] = useState("");
+  const [origemId, setOrigemId] = useState(""), [arquivo, setArquivo] = useState(null), [salvandoNf, setSalvandoNf] = useState(false);
+  const [form, setForm] = useState({ curso_id: "", data_solicitacao: hoje(), favorecido: "", chave_pix: "", itens: [novoItem()] });
+  const arquivoRef = useRef(null);
+  const carregar = async () => { try { const [c, s, i, r, p] = await Promise.all([api.listarCursos(projeto.id), api.listarSolicitacoesFinanceiras(projeto.id, filtro), api.obterConfiguracaoInstitucional(), api.listarFinanceiro(projeto.id), api.listarProjetos()]); setCursos(c); setSolicitacoes(s); setConfig(i); setRegistros(r); setProjetos(p); } catch (e) { setErro(e.message); } };
+  useEffect(() => { carregar(); }, [projeto.id, filtro]);
+  const total = useMemo(() => form.itens.reduce((s, i) => s + totalItem(i), 0), [form.itens]);
+  const mudarItem = (n, campo, valor) => setForm((f) => ({ ...f, itens: f.itens.map((i, x) => x === n ? { ...i, [campo]: valor } : i) }));
+  const salvarSolicitacao = async (e) => { e.preventDefault(); try { await api.criarSolicitacaoFinanceira(projeto.id, form); setForm({ curso_id: "", data_solicitacao: hoje(), favorecido: "", chave_pix: "", itens: [novoItem()] }); carregar(); } catch (x) { setErro(x.message); } };
+  const salvarNf = async (e) => { e.preventDefault(); setSalvandoNf(true); try { const dados = new FormData(); if (origemId) dados.append("origem_projeto_id", origemId); if (arquivo) dados.append("nf", arquivo); await api.criarFinanceiro(projeto.id, dados); setOrigemId(""); setArquivo(null); if (arquivoRef.current) arquivoRef.current.value = ""; carregar(); } catch (x) { setErro(x.message); } finally { setSalvandoNf(false); } };
+  const curso = cursos.find((c) => String(c.id) === String(form.curso_id));
+  return <>
+    <div className="section-title">Cabeçalho institucional</div>
+    <form className="form-grid" onSubmit={async (e) => { e.preventDefault(); try { setConfig(await api.salvarConfiguracaoInstitucional(config)); } catch (x) { setErro(x.message); } }}>
+      <div className="field"><label>Nome do instituto</label><input required value={config.nome_instituto} onChange={(e) => setConfig({ ...config, nome_instituto: e.target.value })} /></div>
+      <div className="field"><label>CNPJ</label><input value={config.cnpj} onChange={(e) => setConfig({ ...config, cnpj: e.target.value })} /></div><div><button className="btn secondary">Salvar cabeçalho</button></div>
+    </form>
+    <div className="section-title">Nova solicitação financeira</div>
+    <form onSubmit={salvarSolicitacao}><div className="form-grid"><div className="field"><label>Curso vinculado</label><select required value={form.curso_id} onChange={(e) => setForm({ ...form, curso_id: e.target.value })}><option value="">Selecione o curso</option>{cursos.map((c) => <option key={c.id} value={c.id}>{c.nome} - {c.municipio || "Município não informado"}</option>)}</select></div><div className="field"><label>Data da solicitação</label><input required type="date" value={form.data_solicitacao} onChange={(e) => setForm({ ...form, data_solicitacao: e.target.value })} /></div></div>
+      {curso && <div className="signature-hint">Curso: {curso.nome} · Município: {curso.municipio || "-"}</div>}
+      <div className="despesas"><div className="despesas-head"><strong>Itens de despesa</strong><button type="button" className="btn small secondary" onClick={() => setForm({ ...form, itens: [...form.itens, novoItem()] })}>+ Adicionar linha</button></div>{form.itens.map((i, n) => <div className="despesa-linha" key={n}><div className="field"><label>Tipo</label><select value={i.tipo} onChange={(e) => mudarItem(n, "tipo", e.target.value)}>{tipos.map((t) => <option key={t}>{t}</option>)}</select></div>{i.tipo === "Outro" && <div className="field"><label>Descrição</label><input required value={i.descricao_outro} onChange={(e) => mudarItem(n, "descricao_outro", e.target.value)} /></div>}<div className="field"><label>Valor unitário</label><input required min="0" step="0.01" type="number" value={i.valor_unitario} onChange={(e) => mudarItem(n, "valor_unitario", e.target.value)} /></div><div className="field"><label>Dias</label><input required min="1" type="number" value={i.dias} onChange={(e) => mudarItem(n, "dias", e.target.value)} /></div><div className="field"><label>Nº alunos</label><input min="1" type="number" value={i.numero_alunos} onChange={(e) => mudarItem(n, "numero_alunos", e.target.value)} /></div><div className="linha-total">{dinheiro(totalItem(i))}</div><button type="button" className="btn small danger" disabled={form.itens.length === 1} onClick={() => setForm({ ...form, itens: form.itens.filter((_, x) => x !== n) })}>Remover</button></div>)}</div>
+      <div className="total-geral">Total geral: {dinheiro(total)}</div><div className="form-grid"><div className="field"><label>Nome do favorecido</label><input required value={form.favorecido} onChange={(e) => setForm({ ...form, favorecido: e.target.value })} /></div><div className="field"><label>Chave PIX</label><input required value={form.chave_pix} onChange={(e) => setForm({ ...form, chave_pix: e.target.value })} /></div></div><button className="btn amber">Salvar solicitação</button>
+    </form>
+    {erro && <div className="banner">{erro}</div>}
+    <div className="section-title">Solicitações já feitas</div><div className="field filtro-curso"><label>Filtrar por curso</label><select value={filtro} onChange={(e) => setFiltro(e.target.value)}><option value="">Todos os cursos</option>{cursos.map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}</select></div>{solicitacoes.map((s) => <div className="card" key={s.id}><div className="card-row"><div><h3>{s.curso_nome}</h3><div className="meta">Favorecido: {s.favorecido} · Total: {dinheiro(s.total)}</div></div><div className="actions-row"><a className="btn small secondary" href={api.urlSolicitacaoFinanceiraPdf(s.id)} target="_blank" rel="noreferrer">Gerar PDF</a><button className="btn small danger" onClick={async () => { if (confirm("Excluir esta solicitação?")) { await api.excluirSolicitacaoFinanceira(s.id); carregar(); } }}>Excluir</button></div></div></div>)}
+    <div className="section-title">Lançamentos e notas fiscais</div>
+    <form onSubmit={salvarNf}><div className="form-grid"><div className="field"><label>Origem (projeto vinculado)</label><select value={origemId} onChange={(e) => setOrigemId(e.target.value)}><option value="">Selecione um projeto de origem</option>{projetos.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}</select></div><div className="field"><label>Nota fiscal (anexo)</label><input ref={arquivoRef} type="file" onChange={(e) => setArquivo(e.target.files[0] || null)} /></div></div><button className="btn amber" disabled={salvandoNf}>{salvandoNf ? "Enviando..." : "+ Registrar lançamento"}</button></form>
+    <div className="section-title">Notas fiscais anexadas</div>{!registros.length && <div className="empty-state">Nenhum lançamento financeiro registrado ainda.</div>}{registros.map((r) => <div className="card" key={r.id}><div className="card-row"><div><h3>{r.origem_nome ? `Origem: ${r.origem_nome}` : "Sem origem vinculada"}</h3><div className="meta">{r.nf_nome_original ? `NF anexada: ${r.nf_nome_original}` : "Nenhuma NF anexada"}</div></div><div className="actions-row">{r.nf_arquivo && <a className="btn small secondary" href={api.urlNf(r.id)} target="_blank" rel="noreferrer">Baixar NF</a>}<button className="btn small danger" onClick={async () => { if (confirm("Excluir este lançamento?")) { await api.excluirFinanceiro(r.id); carregar(); } }}>Excluir</button></div></div></div>)}
+  </>;
 }

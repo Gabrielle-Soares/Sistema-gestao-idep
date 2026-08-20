@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS projetos (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   nome TEXT NOT NULL,
   descricao TEXT,
+  programa_social TEXT,
   criado_em TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -41,6 +42,7 @@ CREATE TABLE IF NOT EXISTS cursos (
   local TEXT,
   municipio TEXT,
   horario TEXT,
+  programa_social TEXT,
   criado_em TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -81,7 +83,42 @@ CREATE TABLE IF NOT EXISTS financeiro (
   nf_nome_original TEXT,
   criado_em TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+CREATE TABLE IF NOT EXISTS configuracao_institucional (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  nome_instituto TEXT NOT NULL DEFAULT 'Instituto de Desenvolvimento Profissional',
+  cnpj TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS solicitacoes_financeiras (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  projeto_id INTEGER NOT NULL REFERENCES projetos(id) ON DELETE CASCADE,
+  curso_id INTEGER NOT NULL REFERENCES cursos(id) ON DELETE CASCADE,
+  nome_instituto TEXT NOT NULL,
+  cnpj TEXT,
+  data_solicitacao TEXT NOT NULL,
+  favorecido TEXT NOT NULL,
+  chave_pix TEXT NOT NULL,
+  total REAL NOT NULL DEFAULT 0,
+  criado_em TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS solicitacao_financeira_itens (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  solicitacao_id INTEGER NOT NULL REFERENCES solicitacoes_financeiras(id) ON DELETE CASCADE,
+  tipo TEXT NOT NULL,
+  descricao_outro TEXT,
+  valor_unitario REAL NOT NULL,
+  dias REAL NOT NULL,
+  numero_alunos REAL,
+  total REAL NOT NULL
+);
 `);
+
+db.prepare(`
+  INSERT OR IGNORE INTO configuracao_institucional (id, nome_instituto, cnpj)
+  VALUES (1, 'Instituto de Desenvolvimento Profissional', '')
+`).run();
 
 // ---------- Migracoes simples (para bancos criados por uma versao anterior) ----------
 function colunaExiste(tabela, coluna) {
@@ -121,6 +158,12 @@ for (const coluna of novasColunasAluno) {
 }
 if (!colunaExiste("cursos", "instrutor_id")) {
   db.exec("ALTER TABLE cursos ADD COLUMN instrutor_id INTEGER REFERENCES instrutores(id)");
+}
+if (!colunaExiste("projetos", "programa_social")) {
+  db.exec("ALTER TABLE projetos ADD COLUMN programa_social TEXT");
+}
+if (!colunaExiste("cursos", "programa_social")) {
+  db.exec("ALTER TABLE cursos ADD COLUMN programa_social TEXT");
 }
 
 // ---------- Usuario padrao ----------

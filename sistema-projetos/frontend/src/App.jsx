@@ -1,15 +1,16 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Login from "./components/Login.jsx";
 import AbaPrincipal from "./components/AbaPrincipal.jsx";
 import AbaPedagogico from "./components/AbaPedagogico.jsx";
 import AbaFinanceiro from "./components/AbaFinanceiro.jsx";
 import MinhaConta from "./components/MinhaConta.jsx";
 import { getUsuario, isAuthenticated, logout } from "./auth";
+import { api } from "./api";
 
 const ETAPAS = [
   { id: "principal", label: "Principal", precisaProjeto: false },
   { id: "pedagogico", label: "Pedagógico", precisaProjeto: true },
-  { id: "financeiro", label: "Financeiro", precisaProjeto: true },
+  { id: "financeiro", label: "Financeiro", precisaProjeto: false },
 ];
 
 const TITULOS = {
@@ -22,7 +23,13 @@ const TITULOS = {
 export default function App() {
   const [usuarioLogado, setUsuarioLogado] = useState(() => (isAuthenticated() ? getUsuario() : null));
   const [projetoAtivo, setProjetoAtivo] = useState(null);
+  const [projetoFinanceiro, setProjetoFinanceiro] = useState(null);
+  const [projetosFinanceiro, setProjetosFinanceiro] = useState([]);
   const [aba, setAba] = useState("principal");
+
+  useEffect(() => {
+    if (usuarioLogado) api.listarProjetos().then(setProjetosFinanceiro).catch(() => setProjetosFinanceiro([]));
+  }, [usuarioLogado]);
 
   if (!usuarioLogado) {
     return <Login onLogin={setUsuarioLogado} />;
@@ -77,7 +84,11 @@ export default function App() {
               <button
                 key={etapa.id}
                 className={`trilha-item trilha-${estado} ${bloqueada ? "trilha-bloqueada" : ""}`}
-                onClick={() => !bloqueada && setAba(etapa.id)}
+                onClick={() => {
+                  if (bloqueada) return;
+                  if (etapa.id === "financeiro" && !projetoFinanceiro && projetoAtivo) setProjetoFinanceiro(projetoAtivo);
+                  setAba(etapa.id);
+                }}
                 disabled={bloqueada}
                 title={bloqueada ? "Abra um projeto primeiro" : ""}
               >
@@ -110,9 +121,18 @@ export default function App() {
         <div className="painel">
           {aba === "principal" && <AbaPrincipal onAbrirProjeto={abrirProjeto} />}
           {aba === "pedagogico" && projetoAtivo && <AbaPedagogico projeto={projetoAtivo} />}
-          {aba === "financeiro" && projetoAtivo && <AbaFinanceiro projeto={projetoAtivo} />}
+          {aba === "financeiro" && <>
+            <div className="field" style={{ maxWidth: 460, marginBottom: 20 }}>
+              <label>Projeto para o financeiro</label>
+              <select value={projetoFinanceiro?.id || ""} onChange={(e) => setProjetoFinanceiro(projetosFinanceiro.find((p) => String(p.id) === e.target.value) || null)}>
+                <option value="">Selecione um projeto</option>
+                {projetosFinanceiro.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
+              </select>
+            </div>
+            {projetoFinanceiro ? <AbaFinanceiro projeto={projetoFinanceiro} /> : <div className="empty-state">Selecione um projeto para consultar ou registrar dados financeiros.</div>}
+          </>}
           {aba === "conta" && <MinhaConta usuario={usuarioLogado} />}
-          {(aba === "pedagogico" || aba === "financeiro") && !projetoAtivo && (
+          {aba === "pedagogico" && !projetoAtivo && (
             <div className="empty-state">Abra um projeto na aba Principal para continuar.</div>
           )}
         </div>

@@ -526,6 +526,65 @@ textarea {
   margin-top: 6px;
 }
 
+.despesas {
+  margin: 18px 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.despesas-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.despesa-linha {
+  display: grid;
+  grid-template-columns: minmax(135px, 1.5fr) minmax(105px, 1fr) 70px minmax(100px, 1fr) minmax(94px, auto) auto;
+  gap: 8px;
+  align-items: end;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+
+.linha-total {
+  min-height: 39px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Uma solicitação precisa manter ao menos um item. Evita um botão Remover
+   desativado sem explicação quando há somente a primeira linha. */
+.despesa-linha:has(.btn:disabled) > .btn {
+  visibility: hidden;
+}
+
+.despesas::after {
+  content: "Mantenha ao menos um item de despesa na solicitação.";
+  display: block;
+  margin-top: 8px;
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.total-geral {
+  text-align: right;
+  font-size: 18px;
+  font-family: "Zilla Slab", Georgia, serif;
+  font-weight: 700;
+  margin: 12px 0 18px;
+}
+
+.filtro-curso { max-width: 360px; margin-bottom: 14px; }
+
 .breadcrumb {
   font-size: 13px;
   color: var(--ink-soft);
@@ -644,6 +703,15 @@ textarea {
   .conteudo-header h1 {
     font-size: 22px;
   }
+
+  .despesa-linha {
+    grid-template-columns: minmax(150px, 1.4fr) minmax(120px, 1fr) 78px minmax(110px, 1fr);
+  }
+
+  .linha-total {
+    justify-content: flex-start;
+    grid-column: span 2;
+  }
 }
 
 @media (max-width: 620px) {
@@ -672,4 +740,49 @@ textarea {
   .login-card {
     padding: 28px 22px 24px;
   }
+  .despesas {
+    margin-left: -2px;
+    margin-right: -2px;
+    padding: 12px;
+  }
+
+  .despesas-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .despesas-head .btn {
+    width: 100%;
+  }
+
+  .despesa-linha {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .despesa-linha .field:first-child,
+  .despesa-linha .field:has(input[required]:not([type="number"])) {
+    grid-column: 1 / -1;
+  }
+
+  .linha-total {
+    grid-column: 1 / -1;
+    min-height: auto;
+    padding-top: 3px;
+    font-size: 15px;
+  }
+
+  .despesa-linha > .btn {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .total-geral {
+    text-align: left;
+    padding: 12px;
+    background: var(--sand);
+    border-radius: var(--radius-sm);
+  }
+
+  .filtro-curso { max-width: none; }
 }

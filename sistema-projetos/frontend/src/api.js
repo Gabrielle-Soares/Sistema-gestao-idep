@@ -149,6 +149,13 @@ export const api = {
   urlNf: (id) =>
     `${BASE}/financeiro/${id}/nf?token=${encodeURIComponent(getToken() || "")}`,
 
+  obterConfiguracaoInstitucional: () => fetch(`${BASE}/configuracao-institucional`, { headers: authHeaders() }).then(handle),
+  salvarConfiguracaoInstitucional: (payload) => fetch(`${BASE}/configuracao-institucional`, { method: "PUT", headers: authHeaders({ "Content-Type": "application/json" }), body: JSON.stringify(payload) }).then(handle),
+  listarSolicitacoesFinanceiras: (projetoId, cursoId = "") => fetch(`${BASE}/projetos/${projetoId}/solicitacoes-financeiras${cursoId ? `?curso_id=${cursoId}` : ""}`, { headers: authHeaders() }).then(handle),
+  criarSolicitacaoFinanceira: (projetoId, payload) => fetch(`${BASE}/projetos/${projetoId}/solicitacoes-financeiras`, { method: "POST", headers: authHeaders({ "Content-Type": "application/json" }), body: JSON.stringify(payload) }).then(handle),
+  excluirSolicitacaoFinanceira: (id) => fetch(`${BASE}/solicitacoes-financeiras/${id}`, { method: "DELETE", headers: authHeaders() }).then(handle),
+  urlSolicitacaoFinanceiraPdf: (id) => `${BASE}/solicitacoes-financeiras/${id}/pdf?token=${encodeURIComponent(getToken() || "")}`,
+
   // Conta
   trocarSenha: (payload) =>
     fetch(`${BASE}/auth/senha`, {

@@ -18,25 +18,26 @@ router.get("/:id", (req, res) => {
 
 // Criar projeto
 router.post("/", (req, res) => {
-  const { nome, descricao } = req.body;
+  const { nome, descricao, programa_social } = req.body;
   if (!nome || !nome.trim()) {
     return res.status(400).json({ erro: "Nome do projeto e obrigatorio" });
   }
-  const stmt = db.prepare("INSERT INTO projetos (nome, descricao) VALUES (?, ?)");
-  const info = stmt.run(nome.trim(), descricao || "");
+  const stmt = db.prepare("INSERT INTO projetos (nome, descricao, programa_social) VALUES (?, ?, ?)");
+  const info = stmt.run(nome.trim(), descricao || "", programa_social || "");
   const projeto = db.prepare("SELECT * FROM projetos WHERE id = ?").get(info.lastInsertRowid);
   res.status(201).json(projeto);
 });
 
 // Atualizar projeto
 router.put("/:id", (req, res) => {
-  const { nome, descricao } = req.body;
+  const { nome, descricao, programa_social } = req.body;
   const existente = db.prepare("SELECT * FROM projetos WHERE id = ?").get(req.params.id);
   if (!existente) return res.status(404).json({ erro: "Projeto não encontrado" });
 
-  db.prepare("UPDATE projetos SET nome = ?, descricao = ? WHERE id = ?").run(
+  db.prepare("UPDATE projetos SET nome = ?, descricao = ?, programa_social = ? WHERE id = ?").run(
     nome ?? existente.nome,
     descricao ?? existente.descricao,
+    programa_social ?? existente.programa_social,
     req.params.id
   );
   const atualizado = db.prepare("SELECT * FROM projetos WHERE id = ?").get(req.params.id);

@@ -407,6 +407,7 @@ export default function AbaPedagogico({ projeto }) {
     local: "",
     municipio: "",
     horario: "",
+    programa_social: "",
   });
 
   const carregar = () => {
@@ -437,7 +438,7 @@ export default function AbaPedagogico({ projeto }) {
     }
     try {
       await api.criarCurso(projeto.id, { ...form, instrutor_id: form.instrutor_id || null });
-      setForm({ nome: "", carga_horaria: "", instrutor_id: "", local: "", municipio: "", horario: "" });
+      setForm({ nome: "", carga_horaria: "", instrutor_id: "", local: "", municipio: "", horario: "", programa_social: "" });
       carregar();
     } catch (e2) {
       setErro(e2.message);
@@ -487,6 +488,10 @@ export default function AbaPedagogico({ projeto }) {
           <div className="field">
             <label>Horário</label>
             <input value={form.horario} onChange={atualizarCampo("horario")} placeholder="Ex: 19h-22h" />
+          </div>
+          <div className="field">
+            <label>Programa social</label>
+            <input list="programas-sociais-curso" value={form.programa_social} onChange={atualizarCampo("programa_social")} placeholder="Selecione ou digite" />
           </div>
         </div>
         {erro && <div className="banner">{erro}</div>}

@@ -28,7 +28,7 @@ router.get("/projetos/:projetoId/cursos", (req, res) => {
 
 // Criar curso em um projeto
 router.post("/projetos/:projetoId/cursos", (req, res) => {
-  const { nome, carga_horaria, instrutor_id, local, municipio, horario } = req.body;
+  const { nome, carga_horaria, instrutor_id, local, municipio, horario, programa_social } = req.body;
   if (!nome || !nome.trim()) {
     return res.status(400).json({ erro: "Nome do curso e obrigatorio" });
   }
@@ -36,8 +36,8 @@ router.post("/projetos/:projetoId/cursos", (req, res) => {
   if (!projeto) return res.status(404).json({ erro: "Projeto não encontrado" });
 
   const stmt = db.prepare(`
-    INSERT INTO cursos (projeto_id, nome, carga_horaria, instrutor_id, local, municipio, horario)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO cursos (projeto_id, nome, carga_horaria, instrutor_id, local, municipio, horario, programa_social)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `);
   const info = stmt.run(
     req.params.projetoId,
@@ -46,7 +46,8 @@ router.post("/projetos/:projetoId/cursos", (req, res) => {
     instrutor_id || null,
     local || "",
     municipio || "",
-    horario || ""
+    horario || "",
+    programa_social || ""
   );
   const curso = db
     .prepare(
@@ -62,9 +63,9 @@ router.post("/projetos/:projetoId/cursos", (req, res) => {
 router.put("/cursos/:cursoId", (req, res) => {
   const existente = db.prepare("SELECT * FROM cursos WHERE id = ?").get(req.params.cursoId);
   if (!existente) return res.status(404).json({ erro: "Curso não encontrado" });
-  const { nome, carga_horaria, instrutor_id, local, municipio, horario } = req.body;
+  const { nome, carga_horaria, instrutor_id, local, municipio, horario, programa_social } = req.body;
   db.prepare(`
-    UPDATE cursos SET nome = ?, carga_horaria = ?, instrutor_id = ?, local = ?, municipio = ?, horario = ?
+    UPDATE cursos SET nome = ?, carga_horaria = ?, instrutor_id = ?, local = ?, municipio = ?, horario = ?, programa_social = ?
     WHERE id = ?
   `).run(
     nome ?? existente.nome,
@@ -73,6 +74,7 @@ router.put("/cursos/:cursoId", (req, res) => {
     local ?? existente.local,
     municipio ?? existente.municipio,
     horario ?? existente.horario,
+    programa_social ?? existente.programa_social,
     req.params.cursoId
   );
   const atualizado = db
