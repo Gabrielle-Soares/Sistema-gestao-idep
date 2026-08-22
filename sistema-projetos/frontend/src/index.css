@@ -469,6 +469,13 @@ textarea {
   gap: 8px;
   flex-wrap: wrap;
 }
+.subnav { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px; }
+.card-button { width:100%; text-align:left; cursor:pointer; display:flex; justify-content:space-between; gap:12px; color:var(--ink); }
+.card-button span { color:var(--ink-soft); font-size:12px; }
+.resumo-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:14px 0; }
+.resumo-grid div { background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:14px; display:flex; flex-direction:column; }
+.resumo-grid strong { font-size:18px; } .resumo-grid span, td small { color:var(--ink-soft); font-size:11px; display:block; }
+.table-wrap { overflow:auto; margin-top:14px; } table { width:100%; border-collapse:collapse; background:var(--surface); } th,td { border-bottom:1px solid var(--line); padding:9px; text-align:left; font-size:12px; } th { background:var(--sand); } td input[type="number"] { width:85px; padding:7px; } td select { min-width:150px; padding:7px; }
 
 /* =========================================================
    Estados / mensagens
@@ -715,6 +722,7 @@ textarea {
 }
 
 @media (max-width: 620px) {
+  .resumo-grid { grid-template-columns:1fr 1fr; }
   .form-grid {
     grid-template-columns: 1fr;
   }

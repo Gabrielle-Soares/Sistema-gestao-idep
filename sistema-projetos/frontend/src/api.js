@@ -156,6 +156,20 @@ export const api = {
   excluirSolicitacaoFinanceira: (id) => fetch(`${BASE}/solicitacoes-financeiras/${id}`, { method: "DELETE", headers: authHeaders() }).then(handle),
   urlSolicitacaoFinanceiraPdf: (id) => `${BASE}/solicitacoes-financeiras/${id}/pdf?token=${encodeURIComponent(getToken() || "")}`,
 
+  listarFuncionarios: (filtros = "") => fetch(`${BASE}/funcionarios${filtros}`, { headers: authHeaders() }).then(handle),
+  criarFuncionario: (payload) => fetch(`${BASE}/funcionarios`, { method: "POST", headers: authHeaders({ "Content-Type": "application/json" }), body: JSON.stringify(payload) }).then(handle),
+  editarFuncionario: (id, payload) => fetch(`${BASE}/funcionarios/${id}`, { method: "PUT", headers: authHeaders({ "Content-Type": "application/json" }), body: JSON.stringify(payload) }).then(handle),
+  listarPagamentosFuncionarios: (filtros = "") => fetch(`${BASE}/pagamentos-funcionarios${filtros}`, { headers: authHeaders() }).then(handle),
+  criarPagamentoFuncionario: (formData) => fetch(`${BASE}/pagamentos-funcionarios`, { method: "POST", headers: authHeaders(), body: formData }).then(handle),
+  listarFolhasAuxilio: (filtros = "") => fetch(`${BASE}/folhas-auxilio${filtros}`, { headers: authHeaders() }).then(handle),
+  criarFolhaAuxilio: (payload) => fetch(`${BASE}/folhas-auxilio`, { method: "POST", headers: authHeaders({ "Content-Type": "application/json" }), body: JSON.stringify(payload) }).then(handle),
+  obterFolhaAuxilio: (id) => fetch(`${BASE}/folhas-auxilio/${id}`, { headers: authHeaders() }).then(handle),
+  atualizarItemAuxilio: (folhaId, itemId, payload) => fetch(`${BASE}/folhas-auxilio/${folhaId}/itens/${itemId}`, { method: "PUT", headers: authHeaders({ "Content-Type": "application/json" }), body: JSON.stringify(payload) }).then(handle),
+  alterarStatusFolha: (id, payload) => fetch(`${BASE}/folhas-auxilio/${id}/status`, { method: "PUT", headers: authHeaders({ "Content-Type": "application/json" }), body: JSON.stringify(payload) }).then(handle),
+  pagarAuxilioEmLote: (id, formData) => fetch(`${BASE}/folhas-auxilio/${id}/pagamentos-lote`, { method: "POST", headers: authHeaders(), body: formData }).then(handle),
+  urlFolhaAuxilioPdf: (id) => `${BASE}/folhas-auxilio/${id}/pdf?token=${encodeURIComponent(getToken() || "")}`,
+  urlFolhaAuxilioExcel: (id) => `${BASE}/folhas-auxilio/${id}/excel?token=${encodeURIComponent(getToken() || "")}`,
+
   // Conta
   trocarSenha: (payload) =>
     fetch(`${BASE}/auth/senha`, {

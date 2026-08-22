@@ -6,7 +6,9 @@
   "type": "commonjs",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "migrate:postgres": "node migrate-sqlite-to-postgres.js",
+    "migrate:schema": "node migrate-postgres-schema.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -14,8 +16,10 @@
     "cors": "^2.8.5",
     "exceljs": "^4.4.0",
     "express": "^4.19.2",
+    "express-async-errors": "^3.1.1",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.1",
-    "pdfkit": "^0.15.0"
+    "pdfkit": "^0.15.0",
+    "pg": "^8.16.3"
   }
 }

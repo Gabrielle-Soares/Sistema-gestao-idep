@@ -5,6 +5,7 @@ const FORM_ALUNO_VAZIO = {
   nome: "",
   nis: "",
   cpf: "",
+  chave_pix: "",
   data_nascimento: "",
   telefone: "",
   endereco: "",
@@ -152,6 +153,10 @@ function CursoCard({ curso, onExcluirCurso }) {
             <div className="field">
               <label>Data de nascimento</label>
               <input type="date" value={formAluno.data_nascimento} onChange={atualizarCampoAluno("data_nascimento")} />
+            </div>
+            <div className="field">
+              <label>Chave Pix</label>
+              <input value={formAluno.chave_pix} onChange={atualizarCampoAluno("chave_pix")} placeholder="CPF, telefone, e-mail ou chave aleatória" />
             </div>
             <div className="field">
               <label>Telefone / WhatsApp</label>

@@ -54,9 +54,8 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // Listar lancamentos financeiros de um projeto
-router.get("/projetos/:projetoId/financeiro", (req, res) => {
-  const registros = db
-    .prepare(
+router.get("/projetos/:projetoId/financeiro", async (req, res) => {
+  const registros = await db.prepare(
       `SELECT f.*, p.nome AS origem_nome
        FROM financeiro f
        LEFT JOIN projetos p ON p.id = f.origem_projeto_id
@@ -68,24 +67,25 @@ router.get("/projetos/:projetoId/financeiro", (req, res) => {
 });
 
 // Criar lancamento financeiro (com upload opcional de NF)
-router.post("/projetos/:projetoId/financeiro", upload.single("nf"), (req, res) => {
-  const projeto = db.prepare("SELECT id FROM projetos WHERE id = ?").get(req.params.projetoId);
+router.post("/projetos/:projetoId/financeiro", upload.single("nf"), async (req, res) => {
+  const projeto = await db.prepare("SELECT id FROM projetos WHERE id = ?").get(req.params.projetoId);
   if (!projeto) return res.status(404).json({ erro: "Projeto não encontrado" });
 
   const { origem_projeto_id, categoria, numero_nf } = req.body;
-  const categoriaFinal = categoria === "Instrutoria" ? "Instrutoria" : "Outros";
+  const categorias = new Set(["Pagamento de funcionário","Pagamento de instrutor","Auxílio-transporte de aluno","Custo de curso","Custo administrativo","Custo pedagógico","Outros","Instrutoria"]);
+  const categoriaFinal = categorias.has(categoria) ? categoria : "Outros";
   const numeroNfFinal = String(numero_nf || "").trim();
-  if (categoriaFinal === "Instrutoria" && !numeroNfFinal) {
+  if (["Instrutoria","Pagamento de instrutor"].includes(categoriaFinal) && !numeroNfFinal) {
     return res.status(400).json({ erro: "O número da Nota Fiscal é obrigatório para Instrutoria" });
   }
   const arquivo = req.file ? req.file.filename : null;
   const nomeOriginal = req.file ? req.file.originalname : null;
 
-  const stmt = db.prepare(`
+  const stmt = await db.prepare(`
     INSERT INTO financeiro (projeto_id, origem_projeto_id, nf_arquivo, nf_nome_original, categoria, numero_nf)
     VALUES (?, ?, ?, ?, ?, ?)
   `);
-  const info = stmt.run(
+  const info = await stmt.run(
     req.params.projetoId,
     origem_projeto_id || null,
     arquivo,
@@ -93,8 +93,7 @@ router.post("/projetos/:projetoId/financeiro", upload.single("nf"), (req, res) =
     categoriaFinal,
     numeroNfFinal || null
   );
-  const registro = db
-    .prepare(
+  const registro = await db.prepare(
       `SELECT f.*, p.nome AS origem_nome
        FROM financeiro f
        LEFT JOIN projetos p ON p.id = f.origem_projeto_id
@@ -105,8 +104,8 @@ router.post("/projetos/:projetoId/financeiro", upload.single("nf"), (req, res) =
 });
 
 // Baixar o arquivo de NF de um lancamento
-router.get("/financeiro/:id/nf", (req, res) => {
-  const registro = db.prepare("SELECT * FROM financeiro WHERE id = ?").get(req.params.id);
+router.get("/financeiro/:id/nf", async (req, res) => {
+  const registro = await db.prepare("SELECT * FROM financeiro WHERE id = ?").get(req.params.id);
   if (!registro || !registro.nf_arquivo) {
     return res.status(404).json({ erro: "Nenhum arquivo de NF encontrado" });
   }
@@ -118,37 +117,37 @@ router.get("/financeiro/:id/nf", (req, res) => {
 });
 
 // Excluir lancamento financeiro
-router.delete("/financeiro/:id", (req, res) => {
-  const registro = db.prepare("SELECT * FROM financeiro WHERE id = ?").get(req.params.id);
+router.delete("/financeiro/:id", async (req, res) => {
+  const registro = await db.prepare("SELECT * FROM financeiro WHERE id = ?").get(req.params.id);
   if (!registro) return res.status(404).json({ erro: "Registro não encontrado" });
   if (registro.nf_arquivo) {
     const filePath = path.join(uploadsDir, registro.nf_arquivo);
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
   }
-  db.prepare("DELETE FROM financeiro WHERE id = ?").run(req.params.id);
+  await db.prepare("DELETE FROM financeiro WHERE id = ?").run(req.params.id);
   res.json({ ok: true });
 });
 
-router.get("/configuracao-institucional", (req, res) => {
-  res.json(db.prepare("SELECT nome_instituto, cnpj FROM configuracao_institucional WHERE id = 1").get());
+router.get("/configuracao-institucional", async (req, res) => {
+  res.json(await db.prepare("SELECT nome_instituto, cnpj FROM configuracao_institucional WHERE id = 1").get());
 });
 
-router.put("/configuracao-institucional", (req, res) => {
+router.put("/configuracao-institucional", async (req, res) => {
   const nome = String(req.body.nome_instituto || "").trim();
   if (!nome) return res.status(400).json({ erro: "Informe o nome do instituto" });
-  db.prepare("UPDATE configuracao_institucional SET nome_instituto = ?, cnpj = ? WHERE id = 1").run(nome, String(req.body.cnpj || "").trim());
-  res.json(db.prepare("SELECT nome_instituto, cnpj FROM configuracao_institucional WHERE id = 1").get());
+  await db.prepare("UPDATE configuracao_institucional SET nome_instituto = ?, cnpj = ? WHERE id = 1").run(nome, String(req.body.cnpj || "").trim());
+  res.json(await db.prepare("SELECT nome_instituto, cnpj FROM configuracao_institucional WHERE id = 1").get());
 });
 
-router.get("/projetos/:projetoId/solicitacoes-financeiras", (req, res) => {
+router.get("/projetos/:projetoId/solicitacoes-financeiras", async (req, res) => {
   const cursoId = req.query.curso_id;
-  const solicitacoes = db.prepare(`SELECT s.*, c.nome AS curso_nome, c.municipio AS curso_municipio FROM solicitacoes_financeiras s JOIN cursos c ON c.id = s.curso_id WHERE s.projeto_id = ? ${cursoId ? "AND s.curso_id = ?" : ""} ORDER BY s.criado_em DESC`).all(...(cursoId ? [req.params.projetoId, cursoId] : [req.params.projetoId]));
+  const solicitacoes = await db.prepare(`SELECT s.*, c.nome AS curso_nome, c.municipio AS curso_municipio FROM solicitacoes_financeiras s JOIN cursos c ON c.id = s.curso_id WHERE s.projeto_id = ? ${cursoId ? "AND s.curso_id = ?" : ""} ORDER BY s.criado_em DESC`).all(...(cursoId ? [req.params.projetoId, cursoId] : [req.params.projetoId]));
   res.json(solicitacoes);
 });
 
-router.post("/projetos/:projetoId/solicitacoes-financeiras", (req, res) => {
+router.post("/projetos/:projetoId/solicitacoes-financeiras", async (req, res) => {
   const { curso_id, data_solicitacao, favorecido, chave_pix, itens } = req.body;
-  const curso = db.prepare("SELECT id FROM cursos WHERE id = ? AND projeto_id = ?").get(curso_id, req.params.projetoId);
+  const curso = await db.prepare("SELECT id FROM cursos WHERE id = ? AND projeto_id = ?").get(curso_id, req.params.projetoId);
   if (!curso) return res.status(400).json({ erro: "Selecione um curso deste projeto" });
   if (!data_solicitacao || !favorecido?.trim() || !chave_pix?.trim() || !Array.isArray(itens) || !itens.length) return res.status(400).json({ erro: "Preencha os dados e inclua ao menos um item" });
   const normalizados = [];
@@ -159,28 +158,28 @@ router.post("/projetos/:projetoId/solicitacoes-financeiras", (req, res) => {
     if (!TIPOS_DESPESA.has(tipo) || !Number.isFinite(valor) || valor < 0 || !Number.isFinite(dias) || dias <= 0 || (alunos !== null && (!Number.isFinite(alunos) || alunos <= 0)) || (tipo === "Outro" && !descricao)) return res.status(400).json({ erro: "Revise os itens de despesa" });
     normalizados.push({ tipo, descricao, valor, dias, alunos, total: valor * dias * (alunos ?? 1) });
   }
-  const config = db.prepare("SELECT nome_instituto, cnpj FROM configuracao_institucional WHERE id = 1").get();
+  const config = await db.prepare("SELECT nome_instituto, cnpj FROM configuracao_institucional WHERE id = 1").get();
   const total = normalizados.reduce((soma, item) => soma + item.total, 0);
-  const salvar = db.transaction(() => {
-    const info = db.prepare("INSERT INTO solicitacoes_financeiras (projeto_id, curso_id, nome_instituto, cnpj, data_solicitacao, favorecido, chave_pix, total) VALUES (?, ?, ?, ?, ?, ?, ?, ?)").run(req.params.projetoId, curso.id, config.nome_instituto, config.cnpj, data_solicitacao, favorecido.trim(), chave_pix.trim(), total);
-    const inserir = db.prepare("INSERT INTO solicitacao_financeira_itens (solicitacao_id, tipo, descricao_outro, valor_unitario, dias, numero_alunos, total) VALUES (?, ?, ?, ?, ?, ?, ?)");
-    normalizados.forEach((i) => inserir.run(info.lastInsertRowid, i.tipo, i.descricao || null, i.valor, i.dias, i.alunos, i.total));
-    return info.lastInsertRowid;
+  const id = await db.transaction(async (client) => {
+    const result = await client.query("INSERT INTO solicitacoes_financeiras (projeto_id, curso_id, nome_instituto, cnpj, data_solicitacao, favorecido, chave_pix, total) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id", [req.params.projetoId, curso.id, config.nome_instituto, config.cnpj, data_solicitacao, favorecido.trim(), chave_pix.trim(), total]);
+    for (const i of normalizados) {
+      await client.query("INSERT INTO solicitacao_financeira_itens (solicitacao_id, tipo, descricao_outro, valor_unitario, dias, numero_alunos, total) VALUES ($1,$2,$3,$4,$5,$6,$7)", [result.rows[0].id, i.tipo, i.descricao || null, i.valor, i.dias, i.alunos, i.total]);
+    }
+    return result.rows[0].id;
   });
-  const id = salvar();
-  res.status(201).json(db.prepare("SELECT * FROM solicitacoes_financeiras WHERE id = ?").get(id));
+  res.status(201).json(await db.prepare("SELECT * FROM solicitacoes_financeiras WHERE id = ?").get(id));
 });
 
-router.delete("/solicitacoes-financeiras/:id", (req, res) => {
-  const resultado = db.prepare("DELETE FROM solicitacoes_financeiras WHERE id = ?").run(req.params.id);
+router.delete("/solicitacoes-financeiras/:id", async (req, res) => {
+  const resultado = await db.prepare("DELETE FROM solicitacoes_financeiras WHERE id = ?").run(req.params.id);
   if (!resultado.changes) return res.status(404).json({ erro: "Solicitação não encontrada" });
   res.json({ ok: true });
 });
 
-router.get("/solicitacoes-financeiras/:id/pdf", (req, res) => {
-  const s = db.prepare("SELECT s.*, c.nome AS curso_nome, c.municipio AS curso_municipio FROM solicitacoes_financeiras s JOIN cursos c ON c.id = s.curso_id WHERE s.id = ?").get(req.params.id);
+router.get("/solicitacoes-financeiras/:id/pdf", async (req, res) => {
+  const s = await db.prepare("SELECT s.*, c.nome AS curso_nome, c.municipio AS curso_municipio FROM solicitacoes_financeiras s JOIN cursos c ON c.id = s.curso_id WHERE s.id = ?").get(req.params.id);
   if (!s) return res.status(404).json({ erro: "Solicitação não encontrada" });
-  const itens = db.prepare("SELECT * FROM solicitacao_financeira_itens WHERE solicitacao_id = ? ORDER BY id").all(s.id);
+  const itens = await db.prepare("SELECT * FROM solicitacao_financeira_itens WHERE solicitacao_id = ? ORDER BY id").all(s.id);
   res.setHeader("Content-Type", "application/pdf"); res.setHeader("Content-Disposition", `attachment; filename="solicitacao-financeira-${s.id}.pdf"`);
   const doc = new PDFDocument({ margin: 42, size: "A4" }); doc.pipe(res);
   const x = 42, largura = 511; let y = cabecalhoPdf(doc, s);

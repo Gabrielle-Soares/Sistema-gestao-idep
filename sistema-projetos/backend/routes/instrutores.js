@@ -4,30 +4,27 @@ const db = require("../db");
 const router = express.Router();
 
 // Listar instrutores
-router.get("/instrutores", (req, res) => {
-  const instrutores = db.prepare("SELECT * FROM instrutores ORDER BY nome ASC").all();
-  res.json(instrutores);
+router.get("/instrutores", async (req, res, next) => { try {
+  res.json((await db.query("SELECT * FROM instrutores ORDER BY nome ASC")).rows); } catch(e) { next(e); }
 });
 
 // Criar instrutor
-router.post("/instrutores", (req, res) => {
+router.post("/instrutores", async (req, res, next) => { try {
   const { nome } = req.body;
   if (!nome || !nome.trim()) {
     return res.status(400).json({ erro: "Nome do instrutor e obrigatorio" });
   }
-  const stmt = db.prepare("INSERT INTO instrutores (nome) VALUES (?)");
-  const info = stmt.run(nome.trim());
-  const instrutor = db.prepare("SELECT * FROM instrutores WHERE id = ?").get(info.lastInsertRowid);
-  res.status(201).json(instrutor);
+  const instrutor = (await db.query("INSERT INTO instrutores (nome) VALUES ($1) RETURNING *", [nome.trim()])).rows[0];
+  res.status(201).json(instrutor); } catch(e) { next(e); }
 });
 
 // Excluir instrutor
-router.delete("/instrutores/:id", (req, res) => {
-  const existente = db.prepare("SELECT * FROM instrutores WHERE id = ?").get(req.params.id);
+router.delete("/instrutores/:id", async (req, res, next) => { try {
+  const existente = (await db.query("SELECT id FROM instrutores WHERE id = $1", [req.params.id])).rows[0];
   if (!existente) return res.status(404).json({ erro: "Instrutor não encontrado" });
   // cursos que apontam pra esse instrutor ficam com instrutor_id nulo (ON DELETE SET NULL)
-  db.prepare("DELETE FROM instrutores WHERE id = ?").run(req.params.id);
-  res.json({ ok: true });
+  await db.query("DELETE FROM instrutores WHERE id = $1", [req.params.id]);
+  res.json({ ok: true }); } catch(e) { next(e); }
 });
 
 module.exports = router;

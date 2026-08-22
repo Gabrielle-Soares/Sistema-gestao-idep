@@ -13,9 +13,8 @@ const TEM_LOGO = fs.existsSync(LOGO_PATH);
 // ---------- Cursos ----------
 
 // Listar cursos de um projeto (com nome do instrutor via JOIN)
-router.get("/projetos/:projetoId/cursos", (req, res) => {
-  const cursos = db
-    .prepare(
+router.get("/projetos/:projetoId/cursos", async (req, res) => {
+  const cursos = await db.prepare(
       `SELECT c.*, i.nome AS instrutor_nome
        FROM cursos c
        LEFT JOIN instrutores i ON i.id = c.instrutor_id
@@ -27,19 +26,19 @@ router.get("/projetos/:projetoId/cursos", (req, res) => {
 });
 
 // Criar curso em um projeto
-router.post("/projetos/:projetoId/cursos", (req, res) => {
+router.post("/projetos/:projetoId/cursos", async (req, res) => {
   const { nome, carga_horaria, instrutor_id, local, municipio, horario, programa_social } = req.body;
   if (!nome || !nome.trim()) {
     return res.status(400).json({ erro: "Nome do curso e obrigatorio" });
   }
-  const projeto = db.prepare("SELECT id FROM projetos WHERE id = ?").get(req.params.projetoId);
+  const projeto = await db.prepare("SELECT id FROM projetos WHERE id = ?").get(req.params.projetoId);
   if (!projeto) return res.status(404).json({ erro: "Projeto não encontrado" });
 
-  const stmt = db.prepare(`
+  const stmt = await db.prepare(`
     INSERT INTO cursos (projeto_id, nome, carga_horaria, instrutor_id, local, municipio, horario, programa_social)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `);
-  const info = stmt.run(
+  const info = await stmt.run(
     req.params.projetoId,
     nome.trim(),
     carga_horaria || "",
@@ -49,8 +48,7 @@ router.post("/projetos/:projetoId/cursos", (req, res) => {
     horario || "",
     programa_social || ""
   );
-  const curso = db
-    .prepare(
+  const curso = await db.prepare(
       `SELECT c.*, i.nome AS instrutor_nome
        FROM cursos c LEFT JOIN instrutores i ON i.id = c.instrutor_id
        WHERE c.id = ?`
@@ -60,11 +58,11 @@ router.post("/projetos/:projetoId/cursos", (req, res) => {
 });
 
 // Atualizar curso
-router.put("/cursos/:cursoId", (req, res) => {
-  const existente = db.prepare("SELECT * FROM cursos WHERE id = ?").get(req.params.cursoId);
+router.put("/cursos/:cursoId", async (req, res) => {
+  const existente = await db.prepare("SELECT * FROM cursos WHERE id = ?").get(req.params.cursoId);
   if (!existente) return res.status(404).json({ erro: "Curso não encontrado" });
   const { nome, carga_horaria, instrutor_id, local, municipio, horario, programa_social } = req.body;
-  db.prepare(`
+  await db.prepare(`
     UPDATE cursos SET nome = ?, carga_horaria = ?, instrutor_id = ?, local = ?, municipio = ?, horario = ?, programa_social = ?
     WHERE id = ?
   `).run(
@@ -77,8 +75,7 @@ router.put("/cursos/:cursoId", (req, res) => {
     programa_social ?? existente.programa_social,
     req.params.cursoId
   );
-  const atualizado = db
-    .prepare(
+  const atualizado = await db.prepare(
       `SELECT c.*, i.nome AS instrutor_nome
        FROM cursos c LEFT JOIN instrutores i ON i.id = c.instrutor_id
        WHERE c.id = ?`
@@ -88,19 +85,18 @@ router.put("/cursos/:cursoId", (req, res) => {
 });
 
 // Excluir curso
-router.delete("/cursos/:cursoId", (req, res) => {
-  const existente = db.prepare("SELECT * FROM cursos WHERE id = ?").get(req.params.cursoId);
+router.delete("/cursos/:cursoId", async (req, res) => {
+  const existente = await db.prepare("SELECT * FROM cursos WHERE id = ?").get(req.params.cursoId);
   if (!existente) return res.status(404).json({ erro: "Curso não encontrado" });
-  db.prepare("DELETE FROM cursos WHERE id = ?").run(req.params.cursoId);
+  await db.prepare("DELETE FROM cursos WHERE id = ?").run(req.params.cursoId);
   res.json({ ok: true });
 });
 
 // ---------- Alunos / Ouvintes ----------
 
 // Listar alunos de um curso
-router.get("/cursos/:cursoId/alunos", (req, res) => {
-  const alunos = db
-    .prepare("SELECT * FROM alunos WHERE curso_id = ? ORDER BY nome ASC")
+router.get("/cursos/:cursoId/alunos", async (req, res) => {
+  const alunos = await db.prepare("SELECT * FROM alunos WHERE curso_id = ? ORDER BY nome ASC")
     .all(req.params.cursoId);
   res.json(alunos);
 });
@@ -109,6 +105,7 @@ const CAMPOS_ALUNO = [
   "nome",
   "nis",
   "cpf",
+  "chave_pix",
   "data_nascimento",
   "telefone",
   "endereco",
@@ -123,12 +120,12 @@ const CAMPOS_ALUNO = [
 ];
 
 // Adicionar aluno/ouvinte a um curso
-router.post("/cursos/:cursoId/alunos", (req, res) => {
+router.post("/cursos/:cursoId/alunos", async (req, res) => {
   const { nome, tipo } = req.body;
   if (!nome || !nome.trim()) {
     return res.status(400).json({ erro: "Nome e obrigatorio" });
   }
-  const curso = db.prepare("SELECT id FROM cursos WHERE id = ?").get(req.params.cursoId);
+  const curso = await db.prepare("SELECT id FROM cursos WHERE id = ?").get(req.params.cursoId);
   if (!curso) return res.status(404).json({ erro: "Curso não encontrado" });
 
   const tipoFinal = tipo === "ouvinte" ? "ouvinte" : "aluno";
@@ -136,17 +133,17 @@ router.post("/cursos/:cursoId/alunos", (req, res) => {
   const placeholders = CAMPOS_ALUNO.map(() => "?").join(", ");
   const valores = CAMPOS_ALUNO.map((campo) => (req.body[campo] || "").toString().trim());
 
-  const stmt = db.prepare(
+  const stmt = await db.prepare(
     `INSERT INTO alunos (curso_id, ${colunas}, tipo) VALUES (?, ${placeholders}, ?)`
   );
-  const info = stmt.run(req.params.cursoId, ...valores, tipoFinal);
-  const aluno = db.prepare("SELECT * FROM alunos WHERE id = ?").get(info.lastInsertRowid);
+  const info = await stmt.run(req.params.cursoId, ...valores, tipoFinal);
+  const aluno = await db.prepare("SELECT * FROM alunos WHERE id = ?").get(info.lastInsertRowid);
   res.status(201).json(aluno);
 });
 
 // Atualizar aluno/ouvinte
-router.put("/alunos/:alunoId", (req, res) => {
-  const existente = db.prepare("SELECT * FROM alunos WHERE id = ?").get(req.params.alunoId);
+router.put("/alunos/:alunoId", async (req, res) => {
+  const existente = await db.prepare("SELECT * FROM alunos WHERE id = ?").get(req.params.alunoId);
   if (!existente) return res.status(404).json({ erro: "Registro não encontrado" });
 
   const tipoFinal = req.body.tipo === "ouvinte" ? "ouvinte" : req.body.tipo === "aluno" ? "aluno" : existente.tipo;
@@ -155,29 +152,28 @@ router.put("/alunos/:alunoId", (req, res) => {
     req.body[campo] !== undefined ? (req.body[campo] || "").toString().trim() : existente[campo]
   );
 
-  db.prepare(`UPDATE alunos SET ${sets}, tipo = ? WHERE id = ?`).run(
+  await db.prepare(`UPDATE alunos SET ${sets}, tipo = ? WHERE id = ?`).run(
     ...valores,
     tipoFinal,
     req.params.alunoId
   );
-  const atualizado = db.prepare("SELECT * FROM alunos WHERE id = ?").get(req.params.alunoId);
+  const atualizado = await db.prepare("SELECT * FROM alunos WHERE id = ?").get(req.params.alunoId);
   res.json(atualizado);
 });
 
 // Remover aluno/ouvinte
-router.delete("/alunos/:alunoId", (req, res) => {
-  const existente = db.prepare("SELECT * FROM alunos WHERE id = ?").get(req.params.alunoId);
+router.delete("/alunos/:alunoId", async (req, res) => {
+  const existente = await db.prepare("SELECT * FROM alunos WHERE id = ?").get(req.params.alunoId);
   if (!existente) return res.status(404).json({ erro: "Registro não encontrado" });
-  db.prepare("DELETE FROM alunos WHERE id = ?").run(req.params.alunoId);
+  await db.prepare("DELETE FROM alunos WHERE id = ?").run(req.params.alunoId);
   res.json({ ok: true });
 });
 
 // ---------- Listas (geracao de PDF com espaco para assinatura) ----------
 
 // Gerar lista em PDF para um curso
-router.get("/cursos/:cursoId/lista/pdf", (req, res) => {
-  const curso = db
-    .prepare(
+router.get("/cursos/:cursoId/lista/pdf", async (req, res) => {
+  const curso = await db.prepare(
       `SELECT c.*, i.nome AS instrutor_nome
        FROM cursos c LEFT JOIN instrutores i ON i.id = c.instrutor_id
        WHERE c.id = ?`
@@ -188,12 +184,11 @@ router.get("/cursos/:cursoId/lista/pdf", (req, res) => {
   const titulo = req.query.titulo || `Lista - ${curso.nome}`;
   const data = req.query.data || new Date().toLocaleDateString("pt-BR");
 
-  const alunos = db
-    .prepare("SELECT * FROM alunos WHERE curso_id = ? ORDER BY tipo ASC, nome ASC")
+  const alunos = await db.prepare("SELECT * FROM alunos WHERE curso_id = ? ORDER BY tipo ASC, nome ASC")
     .all(req.params.cursoId);
 
   // registra a geracao da lista no historico
-  db.prepare("INSERT INTO listas (curso_id, titulo, data) VALUES (?, ?, ?)").run(
+  await db.prepare("INSERT INTO listas (curso_id, titulo, data) VALUES (?, ?, ?)").run(
     req.params.cursoId,
     titulo,
     data
@@ -301,9 +296,8 @@ router.get("/cursos/:cursoId/lista/pdf", (req, res) => {
 });
 
 // Historico de listas geradas para um curso
-router.get("/cursos/:cursoId/listas", (req, res) => {
-  const listas = db
-    .prepare("SELECT * FROM listas WHERE curso_id = ? ORDER BY criado_em DESC")
+router.get("/cursos/:cursoId/listas", async (req, res) => {
+  const listas = await db.prepare("SELECT * FROM listas WHERE curso_id = ? ORDER BY criado_em DESC")
     .all(req.params.cursoId);
   res.json(listas);
 });
@@ -311,8 +305,7 @@ router.get("/cursos/:cursoId/listas", (req, res) => {
 // ---------- Exportacao para Excel ----------
 
 router.get("/cursos/:cursoId/alunos/excel", async (req, res) => {
-  const curso = db
-    .prepare(
+  const curso = await db.prepare(
       `SELECT c.*, i.nome AS instrutor_nome
        FROM cursos c LEFT JOIN instrutores i ON i.id = c.instrutor_id
        WHERE c.id = ?`
@@ -320,8 +313,7 @@ router.get("/cursos/:cursoId/alunos/excel", async (req, res) => {
     .get(req.params.cursoId);
   if (!curso) return res.status(404).json({ erro: "Curso não encontrado" });
 
-  const alunos = db
-    .prepare("SELECT * FROM alunos WHERE curso_id = ? ORDER BY tipo ASC, nome ASC")
+  const alunos = await db.prepare("SELECT * FROM alunos WHERE curso_id = ? ORDER BY tipo ASC, nome ASC")
     .all(req.params.cursoId);
 
   const workbook = new ExcelJS.Workbook();

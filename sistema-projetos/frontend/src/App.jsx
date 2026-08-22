@@ -4,6 +4,7 @@ import AbaPrincipal from "./components/AbaPrincipal.jsx";
 import AbaPedagogico from "./components/AbaPedagogico.jsx";
 import AbaFinanceiro from "./components/AbaFinanceiro.jsx";
 import MinhaConta from "./components/MinhaConta.jsx";
+import GestaoPagamentos from "./components/GestaoPagamentos.jsx";
 import { getUsuario, isAuthenticated, logout } from "./auth";
 import { api } from "./api";
 
@@ -11,12 +12,14 @@ const ETAPAS = [
   { id: "principal", label: "Principal", precisaProjeto: false },
   { id: "pedagogico", label: "Pedagógico", precisaProjeto: true },
   { id: "financeiro", label: "Financeiro", precisaProjeto: false },
+  { id: "pagamentos", label: "Pagamentos", precisaProjeto: false },
 ];
 
 const TITULOS = {
   principal: "Principal",
   pedagogico: "Pedagógico",
   financeiro: "Financeiro",
+  pagamentos: "Funcionários e auxílio-transporte",
   conta: "Minha Conta",
 };
 
@@ -132,6 +135,7 @@ export default function App() {
             {projetoFinanceiro ? <AbaFinanceiro projeto={projetoFinanceiro} /> : <div className="empty-state">Selecione um projeto para consultar ou registrar dados financeiros.</div>}
           </>}
           {aba === "conta" && <MinhaConta usuario={usuarioLogado} />}
+          {aba === "pagamentos" && <GestaoPagamentos />}
           {aba === "pedagogico" && !projetoAtivo && (
             <div className="empty-state">Abra um projeto na aba Principal para continuar.</div>
           )}
