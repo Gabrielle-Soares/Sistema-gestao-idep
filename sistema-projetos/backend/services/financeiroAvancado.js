@@ -21,8 +21,8 @@ async function sincronizarFinanceiro(client, folhaId) {
   if (!folha || !["Pronta para pagamento","Paga"].includes(folha.status)) return;
   const valor = folha.status === "Paga" ? folha.total_pago : folha.total_folha;
   const result = await client.query(`INSERT INTO financeiro
-    (projeto_id,curso_id,folha_auxilio_id,categoria,valor,status,descricao,data_pagamento)
-    VALUES ($1,$2,$3,'Auxílio-transporte de aluno',$4,$5,$6,$7)
+    (projeto_id,curso_id,folha_auxilio_id,categoria,tipo_pagamento,valor,status,descricao,data_pagamento)
+    VALUES ($1,$2,$3,'Auxílio-transporte de aluno','Auxílio',$4,$5,$6,$7)
     ON CONFLICT (folha_auxilio_id) WHERE folha_auxilio_id IS NOT NULL DO UPDATE SET
       valor=EXCLUDED.valor,status=EXCLUDED.status,descricao=EXCLUDED.descricao,data_pagamento=EXCLUDED.data_pagamento
     RETURNING id`, [folha.projeto_id, folha.curso_id, folha.id, valor, folha.status === "Paga" ? "Pago" : "Programado", `Folha de auxílio-transporte ${folha.periodo_inicial} a ${folha.periodo_final}`, folha.status === "Paga" ? new Date() : null]);

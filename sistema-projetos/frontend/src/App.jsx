@@ -4,7 +4,7 @@ import AbaPrincipal from "./components/AbaPrincipal.jsx";
 import AbaPedagogico from "./components/AbaPedagogico.jsx";
 import AbaFinanceiro from "./components/AbaFinanceiro.jsx";
 import MinhaConta from "./components/MinhaConta.jsx";
-import GestaoPagamentos from "./components/GestaoPagamentos.jsx";
+import LancamentosPagamentos from "./components/LancamentosPagamentos.jsx";
 import { getUsuario, isAuthenticated, logout } from "./auth";
 import { api } from "./api";
 
@@ -135,7 +135,7 @@ export default function App() {
             {projetoFinanceiro ? <AbaFinanceiro projeto={projetoFinanceiro} /> : <div className="empty-state">Selecione um projeto para consultar ou registrar dados financeiros.</div>}
           </>}
           {aba === "conta" && <MinhaConta usuario={usuarioLogado} />}
-          {aba === "pagamentos" && <GestaoPagamentos />}
+          {aba === "pagamentos" && <LancamentosPagamentos />}
           {aba === "pedagogico" && !projetoAtivo && (
             <div className="empty-state">Abra um projeto na aba Principal para continuar.</div>
           )}
