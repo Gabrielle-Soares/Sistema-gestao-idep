@@ -1,5 +1,4 @@
 const express = require("express");
-const path = require("path");
 require("express-async-errors");
 const cors = require("cors");
 
@@ -19,7 +18,6 @@ app.use(cors());
 app.use(express.json());
 
 app.get("/api/health", (req, res) => res.json({ ok: true }));
-app.get("/api/logo-idep.png", (req, res) => res.sendFile(path.join(__dirname, "assets", "logo-idep.png")));
 
 // Rotas publicas (login)
 app.use("/api/auth", authRouter);
