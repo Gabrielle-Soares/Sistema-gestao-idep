@@ -28,14 +28,14 @@ export default function App() {
   const [projetoAtivo, setProjetoAtivo] = useState(null);
   const [projetoFinanceiro, setProjetoFinanceiro] = useState(null);
   const [projetosFinanceiro, setProjetosFinanceiro] = useState([]);
-  const [aba, setAba] = useState("principal");
+  const [aba, setAba] = useState(() => getUsuario()?.perfil === "Financeiro" ? "pagamentos" : "principal");
 
   useEffect(() => {
     if (usuarioLogado) api.listarProjetos().then(setProjetosFinanceiro).catch(() => setProjetosFinanceiro([]));
   }, [usuarioLogado]);
 
   if (!usuarioLogado) {
-    return <Login onLogin={setUsuarioLogado} />;
+    return <Login onLogin={(usuario)=>{setUsuarioLogado(usuario);setAba(usuario.perfil==="Financeiro"?"pagamentos":"principal");}} />;
   }
 
   const abrirProjeto = (projeto) => {
@@ -55,7 +55,9 @@ export default function App() {
     setAba("principal");
   };
 
-  const indiceAtual = ETAPAS.findIndex((e) => e.id === aba);
+  const perfil=usuarioLogado.perfil||"Administrador";
+  const etapasVisiveis=ETAPAS.filter(e=>perfil==="Administrador"||(perfil==="Pedagógico"?["principal","pedagogico","financeiro"].includes(e.id):["financeiro","pagamentos"].includes(e.id)));
+  const indiceAtual = etapasVisiveis.findIndex((e) => e.id === aba);
 
   return (
     <div className="app-shell">
@@ -79,7 +81,7 @@ export default function App() {
         )}
 
         <nav className="trilha" aria-label="Etapas do projeto">
-          {ETAPAS.map((etapa, i) => {
+          {etapasVisiveis.map((etapa, i) => {
             const bloqueada = etapa.precisaProjeto && !projetoAtivo;
             const estado =
               aba !== "conta" && i < indiceAtual ? "feita" : aba === etapa.id ? "atual" : "proxima";

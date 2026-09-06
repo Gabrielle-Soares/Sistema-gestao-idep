@@ -6,6 +6,7 @@ function ProjetoCard({ projeto, onAbrirProjeto, onMudou }) {
   const [nome, setNome] = useState(projeto.nome);
   const [descricao, setDescricao] = useState(projeto.descricao || "");
   const [programaSocial, setProgramaSocial] = useState(projeto.programa_social || "");
+  const [valorTotal, setValorTotal] = useState(projeto.valor_total || "0");
   const [erro, setErro] = useState("");
   const [salvando, setSalvando] = useState(false);
 
@@ -18,7 +19,7 @@ function ProjetoCard({ projeto, onAbrirProjeto, onMudou }) {
     }
     setSalvando(true);
     try {
-      await api.editarProjeto(projeto.id, { nome, descricao, programa_social: programaSocial });
+      await api.editarProjeto(projeto.id, { nome, descricao, programa_social: programaSocial, valor_total: valorTotal });
       setEditando(false);
       onMudou();
     } catch (e2) {
@@ -32,6 +33,7 @@ function ProjetoCard({ projeto, onAbrirProjeto, onMudou }) {
     setNome(projeto.nome);
     setDescricao(projeto.descricao || "");
     setProgramaSocial(projeto.programa_social || "");
+    setValorTotal(projeto.valor_total || "0");
     setErro("");
     setEditando(false);
   };
@@ -56,6 +58,7 @@ function ProjetoCard({ projeto, onAbrirProjeto, onMudou }) {
               <label>Descrição (opcional)</label>
               <input value={descricao} onChange={(e) => setDescricao(e.target.value)} />
             </div>
+            <div className="field"><label>Valor total do projeto</label><input type="number" min="0" step="0.01" value={valorTotal} onChange={(e)=>setValorTotal(e.target.value)} /></div>
           </div>
           {erro && <div className="banner">{erro}</div>}
           <div className="actions-row">
@@ -78,6 +81,7 @@ function ProjetoCard({ projeto, onAbrirProjeto, onMudou }) {
           <h3>{projeto.nome}</h3>
           {projeto.descricao && <div className="meta">{projeto.descricao}</div>}
           {projeto.programa_social && <div className="meta">Programa social: {projeto.programa_social}</div>}
+          <div className="meta">Valor total: {Number(projeto.valor_total||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}</div>
           <div className="meta mono">criado em {projeto.criado_em}</div>
         </div>
         <div className="actions-row">
@@ -101,6 +105,7 @@ export default function AbaPrincipal({ onAbrirProjeto }) {
   const [nome, setNome] = useState("");
   const [descricao, setDescricao] = useState("");
   const [programaSocial, setProgramaSocial] = useState("");
+  const [valorTotal, setValorTotal] = useState("");
   const [erro, setErro] = useState("");
   const [carregando, setCarregando] = useState(true);
 
@@ -122,10 +127,11 @@ export default function AbaPrincipal({ onAbrirProjeto }) {
       return;
     }
     try {
-      await api.criarProjeto({ nome, descricao, programa_social: programaSocial });
+      await api.criarProjeto({ nome, descricao, programa_social: programaSocial, valor_total: valorTotal || 0 });
       setNome("");
       setDescricao("");
       setProgramaSocial("");
+      setValorTotal("");
       carregar();
     } catch (e2) {
       setErro(e2.message);
@@ -146,6 +152,7 @@ export default function AbaPrincipal({ onAbrirProjeto }) {
             <label>Descrição (opcional)</label>
             <input value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Breve descrição" />
           </div>
+          <div className="field"><label>Valor total do projeto</label><input type="number" min="0" step="0.01" value={valorTotal} onChange={(e)=>setValorTotal(e.target.value)} placeholder="0,00" /></div>
         </div>
         {erro && <div className="banner">{erro}</div>}
         <button className="btn amber" type="submit">

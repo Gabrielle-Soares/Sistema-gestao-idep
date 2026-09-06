@@ -162,6 +162,10 @@ export const api = {
   listarPagamentosFuncionarios: (filtros = "") => fetch(`${BASE}/pagamentos-funcionarios${filtros}`, { headers: authHeaders() }).then(handle),
   criarPagamentoFuncionario: (formData) => fetch(`${BASE}/pagamentos-funcionarios`, { method: "POST", headers: authHeaders(), body: formData }).then(handle),
   listarLancamentosFinanceiros: (filtros = "") => fetch(`${BASE}/financeiro${filtros}`, { headers: authHeaders() }).then(handle),
+  obterResumoFinanceiro: (filtros = "") => fetch(`${BASE}/financeiro/resumo${filtros}`, { headers: authHeaders() }).then(handle),
+  obterResumoFinanceiroProjeto: (id) => fetch(`${BASE}/projetos/${id}/financeiro/resumo`, { headers: authHeaders() }).then(handle),
+  alterarStatusFinanceiro: (id,payload) => fetch(`${BASE}/financeiro/${id}/status`, { method:"PUT",headers:authHeaders({"Content-Type":"application/json"}),body:JSON.stringify(payload) }).then(handle),
+  urlRelatorioFinanceiro: (filtros = "") => `${BASE}/financeiro/relatorio.pdf${filtros ? `${filtros}&` : "?"}token=${encodeURIComponent(getToken()||"")}`,
   criarLancamentoFinanceiro: (formData) => fetch(`${BASE}/lancamentos-financeiros`, { method: "POST", headers: authHeaders(), body: formData }).then(handle),
   editarLancamentoFinanceiro: (id, payload) => fetch(`${BASE}/lancamentos-financeiros/${id}`, { method: "PUT", headers: authHeaders({ "Content-Type": "application/json" }), body: JSON.stringify(payload) }).then(handle),
   listarFolhasAuxilio: (filtros = "") => fetch(`${BASE}/folhas-auxilio${filtros}`, { headers: authHeaders() }).then(handle),
@@ -180,6 +184,9 @@ export const api = {
       headers: authHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify(payload),
     }).then(handle),
+  listarUsuarios: () => fetch(`${BASE}/auth/usuarios`,{headers:authHeaders()}).then(handle),
+  criarUsuario: (payload) => fetch(`${BASE}/auth/usuarios`,{method:"POST",headers:authHeaders({"Content-Type":"application/json"}),body:JSON.stringify(payload)}).then(handle),
+  alterarPerfilUsuario: (id,perfil) => fetch(`${BASE}/auth/usuarios/${id}/perfil`,{method:"PUT",headers:authHeaders({"Content-Type":"application/json"}),body:JSON.stringify({perfil})}).then(handle),
 };
 
 export default api;

@@ -9,6 +9,7 @@ const pedagogicoRouter = require("./routes/pedagogico");
 const financeiroRouter = require("./routes/financeiro");
 const instrutoresRouter = require("./routes/instrutores");
 const gestaoFinanceiraRouter = require("./routes/gestaoFinanceira");
+const controleFinanceiroRouter = require("./routes/controleFinanceiro");
 const { initializeDatabase } = require("./db");
 
 const app = express();
@@ -28,6 +29,7 @@ app.use("/api", autenticacaoObrigatoria);
 app.use("/api/projetos", projetosRouter);
 app.use("/api", pedagogicoRouter); // /api/projetos/:id/cursos, /api/cursos/:id/alunos, etc.
 app.use("/api", financeiroRouter); // /api/projetos/:id/financeiro, /api/financeiro/:id/nf
+app.use("/api", controleFinanceiroRouter);
 app.use("/api", instrutoresRouter); // /api/instrutores
 app.use("/api", gestaoFinanceiraRouter);
 

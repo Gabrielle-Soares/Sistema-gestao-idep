@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const db = require("./db");
 
 // Em producao, defina a variavel de ambiente JWT_SECRET com um valor proprio
 // (ex: JWT_SECRET=uma-frase-longa-e-aleatoria node server.js).
@@ -7,12 +8,12 @@ const JWT_SECRET = process.env.JWT_SECRET || "idep-sistema-projetos-chave-local"
 const EXPIRA_EM = "12h";
 
 function gerarToken(usuario) {
-  return jwt.sign({ id: usuario.id, usuario: usuario.usuario, nome: usuario.nome }, JWT_SECRET, {
+  return jwt.sign({ id: usuario.id, usuario: usuario.usuario, nome: usuario.nome, perfil: usuario.perfil || "Administrador" }, JWT_SECRET, {
     expiresIn: EXPIRA_EM,
   });
 }
 
-function autenticacaoObrigatoria(req, res, next) {
+async function autenticacaoObrigatoria(req, res, next) {
   const header = req.headers.authorization || "";
   // Aceita o token tanto no header Authorization quanto via ?token=
   // (necessario para links abertos diretamente pelo navegador, como o
@@ -25,11 +26,19 @@ function autenticacaoObrigatoria(req, res, next) {
 
   try {
     const payload = jwt.verify(token, JWT_SECRET);
-    req.usuario = payload;
+    const atual = (await db.query("SELECT id,nome,usuario,perfil FROM usuarios WHERE id=$1", [payload.id])).rows[0];
+    if (!atual) return res.status(401).json({ erro: "Usuário não encontrado" });
+    req.usuario = atual;
     next();
   } catch (e) {
     return res.status(401).json({ erro: "Sessao invalida ou expirada" });
   }
 }
 
-module.exports = { gerarToken, autenticacaoObrigatoria, JWT_SECRET };
+function permitirPerfis(...perfis) {
+  return (req, res, next) => perfis.includes(req.usuario?.perfil)
+    ? next()
+    : res.status(403).json({ erro: "Você não possui permissão para esta operação" });
+}
+
+module.exports = { gerarToken, autenticacaoObrigatoria, permitirPerfis, JWT_SECRET };

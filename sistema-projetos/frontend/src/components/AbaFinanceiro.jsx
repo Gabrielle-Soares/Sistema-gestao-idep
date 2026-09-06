@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../api";
+import { getUsuario } from "../auth";
 
 const tipos = ["Lanche", "Pagamento de instrutor", "Hospedagem", "Diária", "Material específico", "Passagem", "Outro"];
 const hoje = () => new Date().toISOString().slice(0, 10);
@@ -10,10 +11,12 @@ const totalItem = (i) => Number(i.valor_unitario || 0) * Number(i.dias || 0) * (
 export default function AbaFinanceiro({ projeto }) {
   const [cursos, setCursos] = useState([]), [solicitacoes, setSolicitacoes] = useState([]), [registros, setRegistros] = useState([]), [projetos, setProjetos] = useState([]);
   const [config, setConfig] = useState({ nome_instituto: "", cnpj: "" }), [filtro, setFiltro] = useState(""), [erro, setErro] = useState("");
+  const [resumo,setResumo]=useState({});
+  const perfil=getUsuario()?.perfil||"Administrador", podeFinanceiro=["Administrador","Financeiro"].includes(perfil);
   const [origemId, setOrigemId] = useState(""), [arquivo, setArquivo] = useState(null), [salvandoNf, setSalvandoNf] = useState(false), [categoriaNf, setCategoriaNf] = useState("Outros"), [numeroNf, setNumeroNf] = useState("");
   const [form, setForm] = useState({ curso_id: "", data_solicitacao: hoje(), favorecido: "", chave_pix: "", itens: [novoItem()] });
   const arquivoRef = useRef(null);
-  const carregar = async () => { try { const [c, s, i, r, p] = await Promise.all([api.listarCursos(projeto.id), api.listarSolicitacoesFinanceiras(projeto.id, filtro), api.obterConfiguracaoInstitucional(), api.listarFinanceiro(projeto.id), api.listarProjetos()]); setCursos(c); setSolicitacoes(s); setConfig(i); setRegistros(r); setProjetos(p); } catch (e) { setErro(e.message); } };
+  const carregar = async () => { try { const [c, s, i, r, p, resumoAtual] = await Promise.all([api.listarCursos(projeto.id), api.listarSolicitacoesFinanceiras(projeto.id, filtro), api.obterConfiguracaoInstitucional(), api.listarFinanceiro(projeto.id), api.listarProjetos(),api.obterResumoFinanceiroProjeto(projeto.id)]); setCursos(c); setSolicitacoes(s); setConfig(i); setRegistros(r); setProjetos(p); setResumo(resumoAtual); } catch (e) { setErro(e.message); } };
   useEffect(() => { carregar(); }, [projeto.id, filtro]);
   const total = useMemo(() => form.itens.reduce((s, i) => s + totalItem(i), 0), [form.itens]);
   const mudarItem = (n, campo, valor) => setForm((f) => ({ ...f, itens: f.itens.map((i, x) => x === n ? { ...i, [campo]: valor } : i) }));
@@ -21,11 +24,16 @@ export default function AbaFinanceiro({ projeto }) {
   const salvarNf = async (e) => { e.preventDefault(); setSalvandoNf(true); try { const dados = new FormData(); if (origemId) dados.append("origem_projeto_id", origemId); dados.append("categoria", categoriaNf); dados.append("numero_nf", numeroNf); if (arquivo) dados.append("nf", arquivo); await api.criarFinanceiro(projeto.id, dados); setOrigemId(""); setCategoriaNf("Outros"); setNumeroNf(""); setArquivo(null); if (arquivoRef.current) arquivoRef.current.value = ""; carregar(); } catch (x) { setErro(x.message); } finally { setSalvandoNf(false); } };
   const curso = cursos.find((c) => String(c.id) === String(form.curso_id));
   return <>
+    <div className="section-title">Resumo financeiro do projeto</div>
+    <div className="form-grid">{[["Valor total do projeto",resumo.valor_total_projetos],["Total de lançamentos",resumo.total_lancado],["Total pago",resumo.total_pago],["Total a pagar",resumo.total_a_pagar],["Total solicitado",resumo.total_solicitado],["Saldo disponível",resumo.saldo_disponivel]].map(([rotulo,valor])=><div className="card" key={rotulo}><div className="meta">{rotulo}</div><h3>{dinheiro(valor)}</h3></div>)}</div>
+    {podeFinanceiro&&<a className="btn secondary" href={api.urlRelatorioFinanceiro(`?projeto_id=${projeto.id}`)} target="_blank" rel="noreferrer">Gerar relatório em PDF</a>}
+    {perfil==="Administrador"&&<>
     <div className="section-title">Cabeçalho institucional</div>
     <form className="form-grid" onSubmit={async (e) => { e.preventDefault(); try { setConfig(await api.salvarConfiguracaoInstitucional(config)); } catch (x) { setErro(x.message); } }}>
       <div className="field"><label>Nome do instituto</label><input required value={config.nome_instituto} onChange={(e) => setConfig({ ...config, nome_instituto: e.target.value })} /></div>
       <div className="field"><label>CNPJ</label><input value={config.cnpj} onChange={(e) => setConfig({ ...config, cnpj: e.target.value })} /></div><div><button className="btn secondary">Salvar cabeçalho</button></div>
     </form>
+    </>}
     <div className="section-title">Nova solicitação financeira</div>
     <form onSubmit={salvarSolicitacao}><div className="form-grid"><div className="field"><label>Curso vinculado</label><select required value={form.curso_id} onChange={(e) => setForm({ ...form, curso_id: e.target.value })}><option value="">Selecione o curso</option>{cursos.map((c) => <option key={c.id} value={c.id}>{c.nome} - {c.municipio || "Município não informado"}</option>)}</select></div><div className="field"><label>Data da solicitação</label><input required type="date" value={form.data_solicitacao} onChange={(e) => setForm({ ...form, data_solicitacao: e.target.value })} /></div></div>
       {curso && <div className="signature-hint">Curso: {curso.nome} · Município: {curso.municipio || "-"}</div>}
@@ -34,12 +42,12 @@ export default function AbaFinanceiro({ projeto }) {
     </form>
     {erro && <div className="banner">{erro}</div>}
     <div className="section-title">Solicitações já feitas</div><div className="field filtro-curso"><label>Filtrar por curso</label><select value={filtro} onChange={(e) => setFiltro(e.target.value)}><option value="">Todos os cursos</option>{cursos.map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}</select></div>{solicitacoes.map((s) => <div className="card" key={s.id}><div className="card-row"><div><h3>{s.curso_nome}</h3><div className="meta">Favorecido: {s.favorecido} · Total: {dinheiro(s.total)}</div></div><div className="actions-row"><a className="btn small secondary" href={api.urlSolicitacaoFinanceiraPdf(s.id)} target="_blank" rel="noreferrer">Gerar PDF</a><button className="btn small danger" onClick={async () => { if (confirm("Excluir esta solicitação?")) { await api.excluirSolicitacaoFinanceira(s.id); carregar(); } }}>Excluir</button></div></div></div>)}
-    <div className="section-title">Lançamentos e notas fiscais</div>
+    {podeFinanceiro&&<><div className="section-title">Lançamentos e notas fiscais</div>
     <div className="form-grid" style={{ marginBottom: 12 }}>
       <div className="field"><label>Categoria do pagamento</label><select value={categoriaNf} onChange={(e) => setCategoriaNf(e.target.value)}>{["Pagamento de instrutor","Custo de curso","Custo administrativo","Custo pedagógico","Outros"].map(c=><option key={c}>{c}</option>)}</select></div>
       <div className="field"><label>Número da Nota Fiscal {categoriaNf === "Pagamento de instrutor" ? "(obrigatório)" : "(opcional)"}</label><input value={numeroNf} onChange={(e) => setNumeroNf(e.target.value)} placeholder="Ex.: 000123" /></div>
     </div>
     <form onSubmit={salvarNf}><div className="form-grid"><div className="field"><label>Origem (projeto vinculado)</label><select value={origemId} onChange={(e) => setOrigemId(e.target.value)}><option value="">Selecione um projeto de origem</option>{projetos.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}</select></div><div className="field"><label>Nota fiscal (anexo)</label><input ref={arquivoRef} type="file" onChange={(e) => setArquivo(e.target.files[0] || null)} /></div></div><button className="btn amber" disabled={salvandoNf}>{salvandoNf ? "Enviando..." : "+ Registrar lançamento"}</button></form>
-    <div className="section-title">Notas fiscais anexadas</div>{!registros.length && <div className="empty-state">Nenhum lançamento financeiro registrado ainda.</div>}{registros.map((r) => <div className="card" key={r.id}><div className="card-row"><div><h3>{r.origem_nome ? `Origem: ${r.origem_nome}` : "Sem origem vinculada"}</h3><div className="meta">{r.nf_nome_original ? `NF anexada: ${r.nf_nome_original}` : "Nenhuma NF anexada"}</div></div><div className="actions-row">{r.nf_arquivo && <a className="btn small secondary" href={api.urlNf(r.id)} target="_blank" rel="noreferrer">Baixar NF</a>}<button className="btn small danger" onClick={async () => { if (confirm("Excluir este lançamento?")) { await api.excluirFinanceiro(r.id); carregar(); } }}>Excluir</button></div></div></div>)}
+    <div className="section-title">Notas fiscais anexadas</div>{!registros.length && <div className="empty-state">Nenhum lançamento financeiro registrado ainda.</div>}{registros.map((r) => <div className="card" key={r.id}><div className="card-row"><div><h3>{r.origem_nome ? `Origem: ${r.origem_nome}` : "Sem origem vinculada"}</h3><div className="meta">{r.nf_nome_original ? `NF anexada: ${r.nf_nome_original}` : "Nenhuma NF anexada"}</div></div><div className="actions-row">{r.nf_arquivo && <a className="btn small secondary" href={api.urlNf(r.id)} target="_blank" rel="noreferrer">Baixar NF</a>}<button className="btn small danger" onClick={async () => { if (confirm("Excluir este lançamento?")) { await api.excluirFinanceiro(r.id); carregar(); } }}>Excluir</button></div></div></div>)}</>}
   </>;
 }

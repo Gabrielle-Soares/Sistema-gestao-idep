@@ -2,6 +2,7 @@ const express = require("express");
 const db = require("../db");
 
 const router = express.Router();
+router.use((req,res,next)=>req.method==="GET"||["Administrador","Pedagógico"].includes(req.usuario?.perfil)?next():res.status(403).json({erro:"Acesso restrito ao Administrador e Pedagógico"}));
 
 // Listar instrutores
 router.get("/instrutores", async (req, res, next) => { try {

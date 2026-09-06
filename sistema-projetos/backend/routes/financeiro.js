@@ -59,15 +59,16 @@ router.get("/projetos/:projetoId/financeiro", async (req, res) => {
       `SELECT f.*, p.nome AS origem_nome
        FROM financeiro f
        LEFT JOIN projetos p ON p.id = f.origem_projeto_id
-       WHERE f.projeto_id = ?
+       WHERE f.projeto_id = ? ${req.usuario.perfil==="Pedagógico"?"AND f.criado_por = ?":""}
        ORDER BY f.criado_em DESC`
     )
-    .all(req.params.projetoId);
+    .all(...(req.usuario.perfil==="Pedagógico"?[req.params.projetoId,req.usuario.id]:[req.params.projetoId]));
   res.json(registros);
 });
 
 // Criar lancamento financeiro (com upload opcional de NF)
 router.post("/projetos/:projetoId/financeiro", upload.single("nf"), async (req, res) => {
+  if(!["Administrador","Financeiro"].includes(req.usuario.perfil))return res.status(403).json({erro:"Acesso restrito ao Financeiro e Administrador"});
   const projeto = await db.prepare("SELECT id FROM projetos WHERE id = ?").get(req.params.projetoId);
   if (!projeto) return res.status(404).json({ erro: "Projeto não encontrado" });
 
@@ -118,6 +119,7 @@ router.get("/financeiro/:id/nf", async (req, res) => {
 
 // Excluir lancamento financeiro
 router.delete("/financeiro/:id", async (req, res) => {
+  if(!["Administrador","Financeiro"].includes(req.usuario.perfil))return res.status(403).json({erro:"Acesso restrito ao Financeiro e Administrador"});
   const registro = await db.prepare("SELECT * FROM financeiro WHERE id = ?").get(req.params.id);
   if (!registro) return res.status(404).json({ erro: "Registro não encontrado" });
   if (registro.nf_arquivo) {
@@ -133,6 +135,7 @@ router.get("/configuracao-institucional", async (req, res) => {
 });
 
 router.put("/configuracao-institucional", async (req, res) => {
+  if(req.usuario.perfil!=="Administrador")return res.status(403).json({erro:"Acesso restrito ao administrador"});
   const nome = String(req.body.nome_instituto || "").trim();
   if (!nome) return res.status(400).json({ erro: "Informe o nome do instituto" });
   await db.prepare("UPDATE configuracao_institucional SET nome_instituto = ?, cnpj = ? WHERE id = 1").run(nome, String(req.body.cnpj || "").trim());
@@ -141,13 +144,15 @@ router.put("/configuracao-institucional", async (req, res) => {
 
 router.get("/projetos/:projetoId/solicitacoes-financeiras", async (req, res) => {
   const cursoId = req.query.curso_id;
-  const solicitacoes = await db.prepare(`SELECT s.*, c.nome AS curso_nome, c.municipio AS curso_municipio FROM solicitacoes_financeiras s JOIN cursos c ON c.id = s.curso_id WHERE s.projeto_id = ? ${cursoId ? "AND s.curso_id = ?" : ""} ORDER BY s.criado_em DESC`).all(...(cursoId ? [req.params.projetoId, cursoId] : [req.params.projetoId]));
+  const restricao=req.usuario.perfil==="Pedagógico"?"AND s.criado_por = ?":"";
+  const parametros=[req.params.projetoId,...(cursoId?[cursoId]:[]),...(req.usuario.perfil==="Pedagógico"?[req.usuario.id]:[])];
+  const solicitacoes = await db.prepare(`SELECT s.*, c.nome AS curso_nome, c.municipio AS curso_municipio FROM solicitacoes_financeiras s JOIN cursos c ON c.id = s.curso_id WHERE s.projeto_id = ? ${cursoId ? "AND s.curso_id = ?" : ""} ${restricao} ORDER BY s.criado_em DESC`).all(...parametros);
   res.json(solicitacoes);
 });
 
 router.post("/projetos/:projetoId/solicitacoes-financeiras", async (req, res) => {
   const { curso_id, data_solicitacao, favorecido, chave_pix, itens } = req.body;
-  const curso = await db.prepare("SELECT id FROM cursos WHERE id = ? AND projeto_id = ?").get(curso_id, req.params.projetoId);
+  const curso = await db.prepare("SELECT id, municipio FROM cursos WHERE id = ? AND projeto_id = ?").get(curso_id, req.params.projetoId);
   if (!curso) return res.status(400).json({ erro: "Selecione um curso deste projeto" });
   if (!data_solicitacao || !favorecido?.trim() || !chave_pix?.trim() || !Array.isArray(itens) || !itens.length) return res.status(400).json({ erro: "Preencha os dados e inclua ao menos um item" });
   const normalizados = [];
@@ -161,16 +166,23 @@ router.post("/projetos/:projetoId/solicitacoes-financeiras", async (req, res) =>
   const config = await db.prepare("SELECT nome_instituto, cnpj FROM configuracao_institucional WHERE id = 1").get();
   const total = normalizados.reduce((soma, item) => soma + item.total, 0);
   const id = await db.transaction(async (client) => {
-    const result = await client.query("INSERT INTO solicitacoes_financeiras (projeto_id, curso_id, nome_instituto, cnpj, data_solicitacao, favorecido, chave_pix, total) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id", [req.params.projetoId, curso.id, config.nome_instituto, config.cnpj, data_solicitacao, favorecido.trim(), chave_pix.trim(), total]);
+    const result = await client.query("INSERT INTO solicitacoes_financeiras (projeto_id, curso_id, nome_instituto, cnpj, data_solicitacao, favorecido, chave_pix, total, status, criado_por) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'Solicitado',$9) RETURNING id", [req.params.projetoId, curso.id, config.nome_instituto, config.cnpj, data_solicitacao, favorecido.trim(), chave_pix.trim(), total, req.usuario.id]);
     for (const i of normalizados) {
       await client.query("INSERT INTO solicitacao_financeira_itens (solicitacao_id, tipo, descricao_outro, valor_unitario, dias, numero_alunos, total) VALUES ($1,$2,$3,$4,$5,$6,$7)", [result.rows[0].id, i.tipo, i.descricao || null, i.valor, i.dias, i.alunos, i.total]);
     }
+    const descricao=normalizados.map(i=>i.tipo==="Outro"?i.descricao:i.tipo).join(", ");
+    const fin=(await client.query(`INSERT INTO financeiro(projeto_id,curso_id,categoria,tipo_pagamento,prestador_nome,beneficiario_fornecedor,valor,status,descricao,data_pagamento,data_lancamento,municipio,responsavel_lancamento,criado_por)
+      VALUES($1,$2,'Outros','Outros',$3,$3,$4,'Solicitado',$5,$6,$6,$7,$8,$9) RETURNING id`,[req.params.projetoId,curso.id,favorecido.trim(),total,`Solicitação: ${descricao}`,data_solicitacao,curso.municipio||null,req.usuario.nome,req.usuario.id])).rows[0];
+    await client.query("UPDATE solicitacoes_financeiras SET financeiro_id=$1 WHERE id=$2",[fin.id,result.rows[0].id]);
+    await client.query("INSERT INTO historico_alteracoes(entidade,entidade_id,acao,dados,usuario_id) VALUES('lancamento_financeiro',$1,'criado_por_solicitacao',$2,$3)",[fin.id,{solicitacao_id:result.rows[0].id,total},req.usuario.id]);
     return result.rows[0].id;
   });
   res.status(201).json(await db.prepare("SELECT * FROM solicitacoes_financeiras WHERE id = ?").get(id));
 });
 
 router.delete("/solicitacoes-financeiras/:id", async (req, res) => {
+  const vinculada=await db.prepare("SELECT financeiro_id FROM solicitacoes_financeiras WHERE id = ?").get(req.params.id);
+  if(vinculada?.financeiro_id)return res.status(409).json({erro:"A solicitação já está vinculada ao Financeiro e deve ser cancelada, não excluída"});
   const resultado = await db.prepare("DELETE FROM solicitacoes_financeiras WHERE id = ?").run(req.params.id);
   if (!resultado.changes) return res.status(404).json({ erro: "Solicitação não encontrada" });
   res.json({ ok: true });
