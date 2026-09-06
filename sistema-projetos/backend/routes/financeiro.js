@@ -44,14 +44,7 @@ function cabecalhoPdf(doc, solicitacao) {
 const uploadsDir = path.join(__dirname, "..", "uploads");
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadsDir),
-  filename: (req, file, cb) => {
-    const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    cb(null, `${unique}${path.extname(file.originalname)}`);
-  },
-});
-const upload = multer({ storage });
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024 } });
 
 // Listar lancamentos financeiros de um projeto
 router.get("/projetos/:projetoId/financeiro", async (req, res) => {
@@ -79,12 +72,12 @@ router.post("/projetos/:projetoId/financeiro", upload.single("nf"), async (req, 
   if (["Instrutoria","Pagamento de instrutor"].includes(categoriaFinal) && !numeroNfFinal) {
     return res.status(400).json({ erro: "O número da Nota Fiscal é obrigatório para Instrutoria" });
   }
-  const arquivo = req.file ? req.file.filename : null;
+  const arquivo = req.file ? `banco-${Date.now()}${path.extname(req.file.originalname)}` : null;
   const nomeOriginal = req.file ? req.file.originalname : null;
 
   const stmt = await db.prepare(`
-    INSERT INTO financeiro (projeto_id, origem_projeto_id, nf_arquivo, nf_nome_original, categoria, numero_nf)
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT INTO financeiro (projeto_id, origem_projeto_id, nf_arquivo, nf_nome_original, categoria, numero_nf, nf_conteudo, nf_mime)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `);
   const info = await stmt.run(
     req.params.projetoId,
@@ -92,7 +85,9 @@ router.post("/projetos/:projetoId/financeiro", upload.single("nf"), async (req, 
     arquivo,
     nomeOriginal,
     categoriaFinal,
-    numeroNfFinal || null
+    numeroNfFinal || null,
+    req.file?.buffer || null,
+    req.file?.mimetype || null
   );
   const registro = await db.prepare(
       `SELECT f.*, p.nome AS origem_nome
@@ -107,14 +102,29 @@ router.post("/projetos/:projetoId/financeiro", upload.single("nf"), async (req, 
 // Baixar o arquivo de NF de um lancamento
 router.get("/financeiro/:id/nf", async (req, res) => {
   const registro = await db.prepare("SELECT * FROM financeiro WHERE id = ?").get(req.params.id);
-  if (!registro || !registro.nf_arquivo) {
+  if (!registro || (!registro.nf_arquivo && !registro.nf_conteudo)) {
     return res.status(404).json({ erro: "Nenhum arquivo de NF encontrado" });
+  }
+  if (registro.nf_conteudo) {
+    res.setHeader("Content-Type", registro.nf_mime || "application/octet-stream");
+    res.setHeader("Content-Disposition", `attachment; filename*=UTF-8''${encodeURIComponent(registro.nf_nome_original || "comprovante")}`);
+    return res.send(registro.nf_conteudo);
   }
   const filePath = path.join(uploadsDir, registro.nf_arquivo);
   if (!fs.existsSync(filePath)) {
     return res.status(404).json({ erro: "Arquivo não encontrado no servidor" });
   }
   res.download(filePath, registro.nf_nome_original || registro.nf_arquivo);
+});
+
+// Permite recuperar um vinculo cujo arquivo temporario se perdeu, sem recriar o lancamento.
+router.put("/financeiro/:id/nf", upload.single("nf"), async (req,res)=>{
+  if(!["Administrador","Financeiro"].includes(req.usuario.perfil))return res.status(403).json({erro:"Acesso restrito ao Financeiro e Administrador"});
+  if(!req.file)return res.status(400).json({erro:"Selecione um comprovante"});
+  const row=(await db.query(`UPDATE financeiro SET nf_arquivo=$1,nf_nome_original=$2,nf_conteudo=$3,nf_mime=$4,alterado_por=$5,atualizado_em=CURRENT_TIMESTAMP WHERE id=$6 RETURNING id,nf_arquivo,nf_nome_original`,[`banco-${Date.now()}${path.extname(req.file.originalname)}`,req.file.originalname,req.file.buffer,req.file.mimetype,req.usuario.id,req.params.id])).rows[0];
+  if(!row)return res.status(404).json({erro:"Lançamento não encontrado"});
+  await db.query("INSERT INTO historico_alteracoes(entidade,entidade_id,acao,dados,usuario_id) VALUES('lancamento_financeiro',$1,'anexo_atualizado',$2,$3)",[row.id,{nome:row.nf_nome_original},req.usuario.id]);
+  res.json(row);
 });
 
 // Excluir lancamento financeiro

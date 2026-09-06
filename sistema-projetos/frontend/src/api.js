@@ -148,6 +148,7 @@ export const api = {
     }).then(handle),
   urlNf: (id) =>
     `${BASE}/financeiro/${id}/nf?token=${encodeURIComponent(getToken() || "")}`,
+  atualizarComprovanteFinanceiro: (id,arquivo) => { const dados=new FormData(); dados.append("nf",arquivo); return fetch(`${BASE}/financeiro/${id}/nf`,{method:"PUT",headers:authHeaders(),body:dados}).then(handle); },
 
   obterConfiguracaoInstitucional: () => fetch(`${BASE}/configuracao-institucional`, { headers: authHeaders() }).then(handle),
   salvarConfiguracaoInstitucional: (payload) => fetch(`${BASE}/configuracao-institucional`, { method: "PUT", headers: authHeaders({ "Content-Type": "application/json" }), body: JSON.stringify(payload) }).then(handle),
